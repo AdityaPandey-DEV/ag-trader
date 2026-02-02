@@ -174,22 +174,25 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.planned_trades && data.planned_trades.filter((t: any) => t.side === 'LONG').map((trade: any, i: number) => {
-                      const hasPrice = trade.current && trade.current > 0;
-                      const dist = hasPrice ? ((trade.current - trade.entry) / trade.entry * 100).toFixed(2) : "--";
-                      return (
-                        <tr key={i}>
-                          <td style={{ fontWeight: 700 }}>{trade.symbol}</td>
-                          <td style={{ color: '#94a3b8' }}>₹{trade.current || "--"}</td>
-                          <td style={{ color: '#10b981', fontWeight: 600 }}>₹{trade.entry}</td>
-                          <td style={{ color: '#34d399', fontSize: '0.75rem' }}>{trade.target}</td>
-                          <td style={{ color: '#f87171', fontSize: '0.75rem' }}>{trade.stop}</td>
-                          <td style={{ color: hasPrice && trade.current <= trade.entry * 1.002 ? '#10b981' : '#64748b', fontWeight: 600 }}>
-                            {dist}{hasPrice ? '%' : ''}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {data.planned_trades && data.planned_trades
+                      .filter((t: any) => t.side === 'LONG')
+                      .sort((a: any, b: any) => a.symbol.localeCompare(b.symbol))
+                      .map((trade: any, i: number) => {
+                        const hasPrice = trade.current && trade.current > 0;
+                        const dist = hasPrice ? ((trade.current - trade.entry) / trade.entry * 100).toFixed(2) : "--";
+                        return (
+                          <tr key={`${trade.symbol}-LONG`}>
+                            <td style={{ fontWeight: 700 }}>{trade.symbol}</td>
+                            <td style={{ color: '#94a3b8' }}>₹{trade.current || "--"}</td>
+                            <td style={{ color: '#10b981', fontWeight: 600 }}>₹{trade.entry}</td>
+                            <td style={{ color: '#34d399', fontSize: '0.75rem' }}>{trade.target}</td>
+                            <td style={{ color: '#f87171', fontSize: '0.75rem' }}>{trade.stop}</td>
+                            <td style={{ color: hasPrice && trade.current <= trade.entry * 1.002 ? '#10b981' : '#64748b', fontWeight: 600 }}>
+                              {dist}{hasPrice ? '%' : ''}
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
@@ -211,22 +214,25 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.planned_trades && data.planned_trades.filter((t: any) => t.side === 'SHORT').map((trade: any, i: number) => {
-                      const hasPrice = trade.current && trade.current > 0;
-                      const dist = hasPrice ? ((trade.entry - trade.current) / trade.entry * 100).toFixed(2) : "--";
-                      return (
-                        <tr key={i}>
-                          <td style={{ fontWeight: 700 }}>{trade.symbol}</td>
-                          <td style={{ color: '#94a3b8' }}>₹{trade.current || "--"}</td>
-                          <td style={{ color: '#ef4444', fontWeight: 600 }}>₹{trade.entry}</td>
-                          <td style={{ color: '#34d399', fontSize: '0.75rem' }}>{trade.target}</td>
-                          <td style={{ color: '#f87171', fontSize: '0.75rem' }}>{trade.stop}</td>
-                          <td style={{ color: hasPrice && trade.current >= trade.entry * 0.998 ? '#ef4444' : '#64748b', fontWeight: 600 }}>
-                            {dist}{hasPrice ? '%' : ''}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {data.planned_trades && data.planned_trades
+                      .filter((t: any) => t.side === 'SHORT')
+                      .sort((a: any, b: any) => a.symbol.localeCompare(b.symbol))
+                      .map((trade: any, i: number) => {
+                        const hasPrice = trade.current && trade.current > 0;
+                        const dist = hasPrice ? ((trade.entry - trade.current) / trade.entry * 100).toFixed(2) : "--";
+                        return (
+                          <tr key={`${trade.symbol}-SHORT`}>
+                            <td style={{ fontWeight: 700 }}>{trade.symbol}</td>
+                            <td style={{ color: '#94a3b8' }}>₹{trade.current || "--"}</td>
+                            <td style={{ color: '#ef4444', fontWeight: 600 }}>₹{trade.entry}</td>
+                            <td style={{ color: '#34d399', fontSize: '0.75rem' }}>{trade.target}</td>
+                            <td style={{ color: '#f87171', fontSize: '0.75rem' }}>{trade.stop}</td>
+                            <td style={{ color: hasPrice && trade.current >= trade.entry * 0.998 ? '#ef4444' : '#64748b', fontWeight: 600 }}>
+                              {dist}{hasPrice ? '%' : ''}
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
