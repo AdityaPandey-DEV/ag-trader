@@ -96,7 +96,7 @@ async def update_state(request: Request):
     return {"status": "success"}
 
 @app.post("/killswitch")
-async def toggle_killswitch():
+def toggle_killswitch():
     if engine_instance:
         engine_instance.kill_switch = not engine_instance.kill_switch
         engine_instance.update_dashboard()
@@ -105,7 +105,7 @@ async def toggle_killswitch():
     return {"status": "error"}
 
 @app.post("/toggle_paper")
-async def toggle_paper(data: dict):
+def toggle_paper(data: dict):
     if engine_instance:
         enabled = data.get("enabled", True)
         engine_instance.toggle_paper_mode(enabled)
@@ -113,7 +113,7 @@ async def toggle_paper(data: dict):
     return {"status": "error"}
 
 @app.post("/set_capital")
-async def set_capital(data: dict):
+def set_capital(data: dict):
     if engine_instance:
         amount = data.get("amount", 100000.0)
         engine_instance.set_initial_capital(float(amount))
