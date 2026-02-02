@@ -72,3 +72,16 @@ class DhanBroker(BaseBroker):
     def get_positions(self) -> List[Dict]:
         """Paper Trading Placeholder."""
         return []
+
+    def get_balance(self) -> float:
+        """Fetch available cash balance from Dhan."""
+        if not self.dhan: return 0.0
+        try:
+            # Fetch fund limits
+            funds = self.dhan.get_fund_limits()
+            if funds and funds.get('status') == 'success':
+                # Return 'availabelToTradeBalance' from the response
+                return float(funds.get('data', {}).get('availabelToTradeBalance', 0.0))
+        except Exception as e:
+            print(f"[DHAN] Balance Fetch Error: {e}")
+        return 0.0

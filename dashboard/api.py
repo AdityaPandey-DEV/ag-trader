@@ -57,7 +57,7 @@ async def lifespan(app: FastAPI):
             "pnl": round(engine_instance.session_pnl, 2),
             "current_symbol": current_symbol,
             "watchlist": engine_instance.watchlist,
-            "positions": engine_instance.broker.positions,
+            "positions": engine_instance.broker.get_positions(),
             "planned_trades": engine_instance.planned_trades,
             "logs": engine_instance.logs,
             "paper_mode": engine_instance.paper_mode,

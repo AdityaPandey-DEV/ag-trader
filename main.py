@@ -86,6 +86,12 @@ class TradingEngine:
                 if self.dhan_broker:
                     self.broker = self.dhan_broker
                     self.log("MODE: Switched to LIVE TRADING (Dhan Execution)")
+                    
+                    # Auto-fetch balance
+                    balance = self.broker.get_balance()
+                    if balance > 0:
+                        self.initial_capital = balance
+                        self.log(f"CAPITAL: Synced with Dhan (₹{balance:.2f})")
                 else:
                     self.paper_mode = True
                     self.log("ERROR: No live broker configured. Staying in PAPER mode.")

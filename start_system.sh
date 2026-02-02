@@ -16,9 +16,18 @@ npm run dev &
 UI_PID=$!
 cd ..
 
+# Robust Cleanup Function
+cleanup() {
+    echo "Stopping system..."
+    kill -TERM "$API_PID" 2>/dev/null
+    kill -TERM "$UI_PID" 2>/dev/null
+    wait "$API_PID" "$UI_PID" 2>/dev/null
+    echo "System stopped."
+}
+
+# Trap SIGINT (Ctrl+C) and EXIT
+trap cleanup SIGINT EXIT
+
 # 4. Wait for system processes
 echo "System processes started. Press CTRL+C to stop everything."
 wait $API_PID $UI_PID
-
-# Cleanup on exit
-trap "kill $API_PID $UI_PID" EXIT

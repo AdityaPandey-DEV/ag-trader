@@ -36,3 +36,8 @@ class BaseBroker(ABC):
     def get_positions(self) -> List[Dict]:
         """Fetch current open positions."""
         pass
+
+    @abstractmethod
+    def get_balance(self) -> float:
+        """Fetch available trading balance."""
+        pass

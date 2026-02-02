@@ -66,3 +66,12 @@ class KiteBroker(BaseBroker):
 
     def get_positions(self) -> List[Dict]:
         return self.kite.positions()["net"] if self.kite else []
+
+    def get_balance(self) -> float:
+        """Fetch available cash balance (Placeholder)."""
+        if self.kite:
+             try:
+                 margins = self.kite.margins()
+                 return float(margins.get('equity', {}).get('available', {}).get('cash', 0.0))
+             except: pass
+        return 0.0

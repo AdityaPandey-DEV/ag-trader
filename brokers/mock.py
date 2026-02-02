@@ -101,3 +101,6 @@ class MockBroker(BaseBroker):
 
     def get_positions(self) -> List[Dict]:
         return self.positions
+
+    def get_balance(self) -> float:
+        return self.balance
