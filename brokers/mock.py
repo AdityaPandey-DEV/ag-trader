@@ -15,13 +15,11 @@ class MockBroker(BaseBroker):
     def authenticate(self):
         return True
 
-    def get_market_data(self, symbol: str, interval: str) -> Dict:
+    def get_market_data(self, symbol: str, interval: str) -> Optional[Dict]:
         """Fetch real data using yfinance (free)."""
-        fallback_data = {"close": 20000, "open": 19990, "high": 20010, "low": 19980, "volume": 1000}
-        
         try:
             if not yf:
-                return fallback_data
+                return None
                 
             # Standardize for NSE if not specified
             ticker_symbol = symbol if "." in symbol else f"{symbol}.NS"
@@ -32,7 +30,7 @@ class MockBroker(BaseBroker):
             
             data = ticker.history(period="1d", interval=yf_interval)
             if data.empty:
-                return fallback_data
+                return None
                 
             last_row = data.iloc[-1]
             return {
@@ -43,7 +41,7 @@ class MockBroker(BaseBroker):
                 "volume": last_row['Volume']
             }
         except Exception:
-            return fallback_data
+            return None
 
     def place_order(self, symbol: str, side: str, order_type: str, quantity: int, price: Optional[float] = None) -> str:
         order_id = str(uuid.uuid4())
