@@ -8,3 +8,5 @@ pydantic
 pydantic-settings
 gunicorn
 python-dotenv
+dhanhq
+kiteconnect
