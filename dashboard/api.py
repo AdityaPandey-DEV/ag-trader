@@ -32,7 +32,9 @@ trading_state = {
     "positions": [],
     "planned_trades": [],
     "equity_history": [{"time": "START", "equity": 100000}],
-    "logs": ["[SYSTEM] Dashboard started. Waiting for Engine..."]
+    "logs": ["[SYSTEM] Dashboard started. Waiting for Engine..."],
+    "paper_mode": True,
+    "initial_capital": 100000.0
 }
 
 # Global engine reference for the killswitch endpoint
@@ -57,7 +59,9 @@ async def lifespan(app: FastAPI):
             "watchlist": engine_instance.watchlist,
             "positions": engine_instance.broker.positions,
             "planned_trades": engine_instance.planned_trades,
-            "logs": engine_instance.logs
+            "logs": engine_instance.logs,
+            "paper_mode": engine_instance.paper_mode,
+            "initial_capital": engine_instance.initial_capital
         }
         trading_state.update(state)
     
