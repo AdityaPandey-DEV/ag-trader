@@ -54,6 +54,10 @@ class DhanBroker(BaseBroker):
             results = {}
             if response and response.get('status') == 'success':
                 data_map = response.get('data', {})
+                print(f"[DEBUG] Dhan Success! Received {len(data_map)} symbols.")
+                if not data_map:
+                    print(f"[DEBUG] WARNING: Dhan returned SUCCESS but NO DATA (Empty Map). Plan likely inactive.")
+                    
                 for ds, target_symbol in mapping.items():
                     data = data_map.get(ds, {})
                     if data:
