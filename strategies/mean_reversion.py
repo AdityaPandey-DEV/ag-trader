@@ -13,10 +13,10 @@ class mean_reversion_strategy:
         body = abs(close - open)
         if side == "SHORT":
             upper_wick = high - max(open, close)
-            return upper_wick > body
+            return upper_wick > (0.3 * body) # Relaxed from 1.0 * body
         elif side == "LONG":
             lower_wick = min(open, close) - low
-            return lower_wick > body
+            return lower_wick > (0.3 * body) # Relaxed from 1.0 * body
         return False
 
     def check_volume_filter(self, current_volume: float, prior_volume: float) -> bool:
@@ -24,7 +24,8 @@ class mean_reversion_strategy:
         Red candle volume >= prior candle volume (for shorts)
         Green candle volume >= prior candle volume (for longs)
         """
-        return current_volume >= prior_volume
+        # Relaxed: Only needs 70% of prior volume to confirm
+        return current_volume >= (prior_volume * 0.7)
 
     def generate_signal(self, 
                        price_data: Dict[str, float], 

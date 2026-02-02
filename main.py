@@ -124,7 +124,7 @@ class TradingEngine:
             if symbol not in self.levels:
                 high_24h = market_data.get('high', current_price * 1.01)
                 low_24h = market_data.get('low', current_price * 0.99)
-                vol_range = max(0.005, (high_24h - low_24h) / current_price * 0.3)
+                vol_range = max(0.002, (high_24h - low_24h) / current_price * 0.15) # Tighter for more action
                 self.levels[symbol] = {
                     "resistance": current_price * (1 + vol_range),
                     "support": current_price * (1 - vol_range),
@@ -148,10 +148,11 @@ class TradingEngine:
                     "entry": round(resistance, 2), "target": round(support * 1.002, 2), "stop": round(resistance * 1.005, 2)
                 })
 
+            # Level Touch Notification
             if current_price <= support:
-                self.log(f"TOUCH: {symbol} at Support \u20b9{support}")
+                self.log(f"⚡ TOUCH: {symbol} hit SUPPORT ₹{support:.2f}. Evaluating signal...")
             elif current_price >= resistance:
-                self.log(f"TOUCH: {symbol} at Resistance \u20b9{resistance}")
+                self.log(f"⚡ TOUCH: {symbol} hit RESISTANCE ₹{resistance:.2f}. Evaluating signal...")
 
             prior_data = market_data.get('prior', market_data)
             signal = self.strategy.generate_signal(
@@ -162,7 +163,9 @@ class TradingEngine:
             if signal:
                 quantity = 100
                 costs = self.tax_calculator.calculate_costs(signal['entry'], signal['target'], quantity)
-                ai_confirmed = self.ai_analyzer.confirm_trend(symbol, market_data)
+                # Check AI Filter (Internal or Real)
+                summary = f"Symbol: {symbol}, Side: {signal['side']}, LTP: {current_price}, Entry: {signal['entry']}"
+                ai_confirmed = self.ai_analyzer.confirm_trend(summary)
                 
                 if ai_confirmed and costs['net_profit_pct'] > 0.05:
                     self.broker.place_order(symbol, signal['side'], "MARKET", quantity)
@@ -234,7 +237,13 @@ class TradingEngine:
                         try: f.result(timeout=1)
                         except: pass
                     
-                    self.update_dashboard()
+                    self.update_dashboard("MULTI")
+                    
+                    # Heartbeat log every 20s
+                    if int(time.time()) % 20 == 0:
+                        sample = symbols[:3]
+                        self.log(f"SCANNING: Real-time feed active for {len(symbols)} stocks. (Monitoring {sample}...)")
+
                     time.sleep(max(0.1, 1.0 - (time.time() - now)))
                 except KeyboardInterrupt:
                     break
