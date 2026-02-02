@@ -17,29 +17,33 @@ class MockBroker(BaseBroker):
 
     def get_market_data(self, symbol: str, interval: str) -> Dict:
         """Fetch real data using yfinance (free)."""
-        if not yf:
-            return {"close": 20000, "open": 19990, "high": 20010, "low": 19980, "volume": 1000}
-            
-        # Standardize for NSE if not specified
-        ticker_symbol = symbol if "." in symbol else f"{symbol}.NS"
-        ticker = yf.Ticker(ticker_symbol)
+        fallback_data = {"close": 20000, "open": 19990, "high": 20010, "low": 19980, "volume": 1000}
         
-        # Mapping interval (yfinance: 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d...)
-        yf_interval = "5m" if "5" in interval else "1m"
-        
-        data = ticker.history(period="1d", interval=yf_interval)
-        if data.empty:
-            print(f"Warning: No data for {ticker_symbol}. Using fallback mock data.")
-            return {"close": 20000, "open": 19990, "high": 20010, "low": 19980, "volume": 1000}
+        try:
+            if not yf:
+                return fallback_data
+                
+            # Standardize for NSE if not specified
+            ticker_symbol = symbol if "." in symbol else f"{symbol}.NS"
+            ticker = yf.Ticker(ticker_symbol)
             
-        last_row = data.iloc[-1]
-        return {
-            "open": last_row['Open'],
-            "high": last_row['High'],
-            "low": last_row['Low'],
-            "close": last_row['Close'],
-            "volume": last_row['Volume']
-        }
+            # Mapping interval (yfinance: 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d...)
+            yf_interval = "5m" if "5" in interval else "1m"
+            
+            data = ticker.history(period="1d", interval=yf_interval)
+            if data.empty:
+                return fallback_data
+                
+            last_row = data.iloc[-1]
+            return {
+                "open": last_row['Open'],
+                "high": last_row['High'],
+                "low": last_row['Low'],
+                "close": last_row['Close'],
+                "volume": last_row['Volume']
+            }
+        except Exception:
+            return fallback_data
 
     def place_order(self, symbol: str, side: str, order_type: str, quantity: int, price: Optional[float] = None) -> str:
         order_id = str(uuid.uuid4())

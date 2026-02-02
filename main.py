@@ -78,6 +78,10 @@ class TradingEngine:
         try:
             market_data = self.broker.get_market_data(symbol, "5minute")
             
+            if not market_data or 'close' not in market_data:
+                self.log(f"WARNING: Could not fetch data for {symbol}. Skipping tick.")
+                return
+
             # Dynamic levels
             current_price = market_data['close']
             resistance = current_price * 1.01
