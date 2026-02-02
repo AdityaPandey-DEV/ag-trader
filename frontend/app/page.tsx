@@ -56,9 +56,10 @@ export default function Dashboard() {
           <button
             className={`primary ${data.kill_switch ? 'danger' : ''}`}
             onClick={toggleKillSwitch}
+            style={{ backgroundColor: data.kill_switch ? '#ef4444' : '#6366f1', border: 'none' }}
           >
             <Power size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-            {data.kill_switch ? 'FORCE SHUTDOWN' : 'SYSTEM ARMED'}
+            {data.kill_switch ? 'SYSTEM STOPPED' : 'SYSTEM ARMED'}
           </button>
           <div className="live-tag">
             <span className="pulse"></span> LIVE: {data.current_symbol} {new Date().toLocaleTimeString()}
