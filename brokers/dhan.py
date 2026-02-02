@@ -7,6 +7,7 @@ class DhanBroker(BaseBroker):
         self.client_id = client_id
         self.access_token = access_token
         self.dhan = None
+        self.auth_failed = False # Circuit breaker
         
         if client_id and "your_" not in client_id:
             try:
@@ -15,16 +16,17 @@ class DhanBroker(BaseBroker):
                 print(f"[DHAN] Initialization Error: {e}")
 
     def authenticate(self):
-        return self.dhan is not None
+        return self.dhan is not None and not self.auth_failed
 
     def get_market_data(self, symbol: str, interval: str) -> Optional[Dict]:
         """Fetch real-time data for a single symbol from Dhan."""
+        if self.auth_failed: return None
         batch = self.get_market_data_batch([symbol])
         return batch.get(symbol)
 
     def get_market_data_batch(self, symbols: List[str]) -> Dict[str, Dict]:
         """Fetch real-time data for multiple symbols in one go."""
-        if not self.dhan:
+        if not self.dhan or self.auth_failed:
             return {}
             
         try:
@@ -34,11 +36,21 @@ class DhanBroker(BaseBroker):
             
             # Use batch quote_data call
             response = self.dhan.quote_data(securities=dhan_securities)
-            print(f"[DEBUG] IDs: {list(dhan_securities.keys())[:2]}")
-            print(f"[DEBUG] Dhan Batch Resp Status: {response.get('status')}")
-            if response.get('status') != 'success':
-                print(f"[DEBUG] Full Resp: {response}")
             
+            # Check for Auth Failure (808)
+            if response.get('status') == 'failure':
+                err_data = response.get('data', {}).get('data', {})
+                if isinstance(err_data, dict) and '808' in err_data:
+                    print(f"🚨 [CRITICAL] AUTH FAILED: {err_data['808']}")
+                    print("🛑 Stopping all Dhan requests until restart.")
+                    self.auth_failed = True
+                    return {}
+            
+            # Debug logs for other errors
+            if response.get('status') != 'success':
+                 # print(f"[DEBUG] Dhan Batch Fail: {response}") 
+                 pass
+
             results = {}
             if response and response.get('status') == 'success':
                 data_map = response.get('data', {})
