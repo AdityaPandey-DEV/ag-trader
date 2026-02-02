@@ -73,19 +73,21 @@ export default function Dashboard() {
         </div>
 
         <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          {/* CAPITAL INPUT */}
-          <div className="glass-card" style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid #334155' }}>
-            <Coins size={16} color="#fbbf24" />
-            <input
-              type="number"
-              placeholder={`\u20b9${data.initial_capital}`}
-              value={capitalInput}
-              onChange={(e) => setCapitalInput(e.target.value)}
-              onBlur={updateCapital}
-              onKeyDown={(e) => e.key === 'Enter' && updateCapital()}
-              style={{ background: 'transparent', border: 'none', color: '#fff', width: '80px', fontSize: '0.85rem', outline: 'none' }}
-            />
-          </div>
+          {/* CAPITAL INPUT (Only visible in Paper Mode) */}
+          {data.paper_mode && (
+            <div className="glass-card" style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid #334155' }}>
+              <Coins size={16} color="#fbbf24" />
+              <input
+                type="number"
+                placeholder={`\u20b9${data.initial_capital}`}
+                value={capitalInput}
+                onChange={(e) => setCapitalInput(e.target.value)}
+                onBlur={updateCapital}
+                onKeyDown={(e) => e.key === 'Enter' && updateCapital()}
+                style={{ background: 'transparent', border: 'none', color: '#fff', width: '80px', fontSize: '0.85rem', outline: 'none' }}
+              />
+            </div>
+          )}
 
           {/* PAPER TOGGLE */}
           <button

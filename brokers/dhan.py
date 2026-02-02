@@ -34,6 +34,7 @@ class DhanBroker(BaseBroker):
             
             # Use batch quote_data call
             response = self.dhan.quote_data(securities=dhan_securities)
+            # print(f"[DEBUG] Dhan Batch Resp: {response.get('status')} for {len(symbols)} symbols")
             
             results = {}
             if response and response.get('status') == 'success':
