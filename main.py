@@ -139,11 +139,13 @@ class TradingEngine:
         if self.kill_switch: return
 
         try:
+        try:
             market_data = pre_fetched_data
+            # CRITICAL: Do NOT fetch individually if batch missing. This causes Rate Limit (805) explosion.
             if not market_data:
-                market_data = self.data_feed.get_market_data(symbol, "1minute")
+                return 
             
-            if not market_data or 'close' not in market_data: return
+            if 'close' not in market_data: return
             current_price = market_data['close']
 
             # Levels logic
