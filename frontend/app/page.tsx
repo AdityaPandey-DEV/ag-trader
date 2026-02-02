@@ -82,10 +82,23 @@ export default function Dashboard() {
                 placeholder={`\u20b9${data.initial_capital}`}
                 value={capitalInput}
                 onChange={(e) => setCapitalInput(e.target.value)}
-                onBlur={updateCapital}
                 onKeyDown={(e) => e.key === 'Enter' && updateCapital()}
                 style={{ background: 'transparent', border: 'none', color: '#fff', width: '80px', fontSize: '0.85rem', outline: 'none' }}
               />
+              <button
+                onClick={updateCapital}
+                style={{
+                  background: 'rgba(99, 102, 241, 0.2)',
+                  border: '1px solid #6366f1',
+                  borderRadius: '4px',
+                  padding: '2px 4px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <TrendingUp size={14} color="#6366f1" />
+              </button>
             </div>
           )}
 

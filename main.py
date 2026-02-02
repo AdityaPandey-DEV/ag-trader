@@ -44,6 +44,10 @@ class TradingEngine:
         self.kill_switch = False
         self.on_update = lambda symbol="MULTI": None
         
+        # Dashboard Data
+        self.equity_history = [{"time": datetime.datetime.now().strftime("%H:%M:%S"), "equity": self.initial_capital}]
+        self.last_equity_update = time.time()
+        
         # Brokers
         self.mock_broker = MockBroker()
         self.dhan_broker = None
@@ -111,11 +115,25 @@ class TradingEngine:
     def set_initial_capital(self, amount: float):
         with self.lock:
             self.initial_capital = amount
+            # Reset history on capital change
+            self.equity_history = [{"time": datetime.datetime.now().strftime("%H:%M:%S"), "equity": amount}]
             self.log(f"CAPITAL: Set to ₹{amount:.2f}")
             self.update_dashboard()
 
     def update_dashboard(self, current_symbol: str = "MULTI"):
         try:
+            # Periodic Equity Update (Every 5 seconds for smoother demo, usually 60s)
+            now = time.time()
+            if now - self.last_equity_update > 5:
+                # Keep history manageable
+                if len(self.equity_history) > 500: self.equity_history.pop(0)
+                
+                self.equity_history.append({
+                    "time": datetime.datetime.now().strftime("%H:%M:%S"),
+                    "equity": self.initial_capital + self.session_pnl
+                })
+                self.last_equity_update = now
+
             self.on_update(current_symbol)
         except Exception as e:
             print(f"Dashboard update error: {e}")
@@ -135,7 +153,8 @@ class TradingEngine:
                 "watchlist": self.watchlist,
                 "positions": self.broker.get_positions(),
                 "planned_trades": self.planned_trades,
-                "logs": self.logs
+                "logs": self.logs,
+                "equity_history": self.equity_history
             }
 
     def run_tick(self, symbol: str, pre_fetched_data=None):

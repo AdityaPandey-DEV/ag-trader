@@ -61,7 +61,8 @@ async def lifespan(app: FastAPI):
             "planned_trades": engine_instance.planned_trades,
             "logs": engine_instance.logs,
             "paper_mode": engine_instance.paper_mode,
-            "initial_capital": engine_instance.initial_capital
+            "initial_capital": engine_instance.initial_capital,
+            "equity_history": engine_instance.equity_history
         }
         trading_state.update(state)
     
