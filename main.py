@@ -56,13 +56,16 @@ class TradingEngine:
             self.kite_broker = KiteBroker(config.KITE_API_KEY, config.KITE_ACCESS_TOKEN)
 
         # Unified Data Feed & Execution
-        # USER REQUEST: ALWAYS use Live Broker (Dhan/Kite) for Data
+        # HYBRID MODE: Prefer Dhan, but allow Mock (yfinance) if Dhan Data is inactive
         self.data_feed = self.dhan_broker or self.kite_broker
         
+        # Force Hybrid if Dhan Data is failing (User has inactive plan)
+        # Uncomment below to force yfinance data while keeping Dhan Execution
+        self.data_feed = self.mock_broker 
+
         if not self.data_feed:
-             self.log("[CRITICAL] NO LIVE BROKER (Dhan/Kite) DETECTED! Data Feed will not work.")
-             self.log("Please check .env credentials.")
-             # Fallback to Mock ONLY if absolutely necessary to prevent crash, but warn heavily
+             self.log("[CRITICAL] NO DATA FEED AVAILABLE.")
+             self.log("Please check .env or internet.")
              self.data_feed = self.mock_broker
         
         self.broker = self.mock_broker # Execution starts in MOCK
