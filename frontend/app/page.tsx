@@ -72,7 +72,7 @@ export default function Dashboard() {
           <h1><Shield size={32} /> AG_TRADER <span className="regime-badge">{data.regime}</span></h1>
         </div>
 
-        <div className="header-actions" style={{ gap: '1rem' }}>
+        <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {/* CAPITAL INPUT */}
           <div className="glass-card" style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid #334155' }}>
             <Coins size={16} color="#fbbf24" />
