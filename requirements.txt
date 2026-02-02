@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+websockets
+requests
+pandas
+yfinance
+pydantic
+pydantic-settings
+gunicorn
+python-dotenv

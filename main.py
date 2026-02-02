@@ -1,0 +1,148 @@
+import time
+import requests
+import datetime
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from config.settings import config
+from core.indicators import calculate_base_range, calculate_trend_shift_linreg, update_tsd_count, get_regime
+from core.risk_manager import RiskManager
+from strategies.mean_reversion import mean_reversion_strategy
+from brokers.mock import MockBroker
+import pandas as pd
+
+from utils.tax_calculator import TaxCalculator
+from utils.ai_analyzer import AITrendAnalyzer
+from utils.screenshot import ChartScreenshotter
+from core.screener import StockScreener
+
+class TradingEngine:
+    def __init__(self):
+        self.risk_manager = RiskManager(
+            max_drawdown=config.MAX_SESSION_DRAWDOWN_PCT,
+            max_trades=config.MAX_TRADES_PER_SESSION,
+            max_losses=config.MAX_CONSECUTIVE_LOSSES
+        )
+        self.strategy = mean_reversion_strategy(config)
+        self.broker = MockBroker()
+        self.tax_calculator = TaxCalculator()
+        self.ai_analyzer = AITrendAnalyzer(api_key=config.GEMINI_API_KEY)
+        self.screenshotter = ChartScreenshotter()
+        self.screener = StockScreener(api_key=config.GEMINI_API_KEY)
+        self.tsd_count = 0
+        self.watchlist = []
+        self.planned_trades = []
+        self.logs = ["[SYSTEM] Multi-threaded Engine initialized."]
+        self.session_pnl = 0.0
+        self.lock = threading.Lock()
+
+    def log(self, message: str):
+        with self.lock:
+            timestamp = datetime.datetime.now().strftime("%H:%M")
+            full_msg = f"[{timestamp}] {message}"
+            self.logs.append(full_msg)
+            if len(self.logs) > 25: self.logs.pop(0)
+            print(full_msg)
+
+    def update_dashboard(self, current_symbol: str = "MULTI"):
+        """Pushes current state to the FastAPI dashboard."""
+        try:
+            with self.lock:
+                state = {
+                    "regime": get_regime(self.tsd_count),
+                    "tsd_count": self.tsd_count,
+                    "risk_consumed": self.risk_manager.daily_pnl,
+                    "max_drawdown": config.MAX_SESSION_DRAWDOWN_PCT,
+                    "kill_switch": False,
+                    "pnl": round(self.session_pnl, 2),
+                    "current_symbol": current_symbol,
+                    "watchlist": self.watchlist,
+                    "positions": self.broker.positions,
+                    "planned_trades": self.planned_trades,
+                    "logs": self.logs
+                }
+            requests.post("http://localhost:8000/update", json=state, timeout=1)
+        except Exception:
+            pass
+
+    def run_pre_market(self, universe: list):
+        """Screens the universe and prepares the watchlist."""
+        self.log("Running pre-market stock screening...")
+        self.watchlist = self.screener.screen(universe)
+        self.log(f"Watchlist prepared: {[s['symbol'] for s in self.watchlist]}")
+        self.update_dashboard()
+
+    def run_tick(self, symbol: str):
+        if not self.risk_manager.check_constraints():
+            return
+
+        try:
+            market_data = self.broker.get_market_data(symbol, "5minute")
+            
+            # Dynamic levels
+            current_price = market_data['close']
+            resistance = current_price * 1.01
+            support = current_price * 0.99
+            base_range = current_price * 0.005
+            trend_shift = current_price * 0.001
+            regime = get_regime(self.tsd_count)
+            
+            # Update shared planned trades
+            with self.lock:
+                # Remove old plans for this symbol and add new ones
+                self.planned_trades = [p for p in self.planned_trades if p['symbol'] != symbol]
+                self.planned_trades.append({"symbol": symbol, "side": "LONG", "entry": round(support, 2), "target": round(resistance * 0.998, 2), "stop": round(support * 0.995, 2)})
+                self.planned_trades.append({"symbol": symbol, "side": "SHORT", "entry": round(resistance, 2), "target": round(support * 1.002, 2), "stop": round(resistance * 1.005, 2)})
+
+            signal = self.strategy.generate_signal(
+                market_data, market_data, resistance, support, 
+                regime, base_range, trend_shift
+            )
+            
+            if signal:
+                quantity = 100
+                if signal['side'] == "LONG":
+                    costs = self.tax_calculator.calculate_costs(signal['entry'], signal['target'], quantity)
+                else:
+                    costs = self.tax_calculator.calculate_costs(signal['target'], signal['entry'], quantity)
+                
+                if costs['net_pnl'] > 0:
+                    summary = f"Symbol: {symbol}, Side: {signal['side']}, Entry: {signal['entry']}, Target: {signal['target']}"
+                    if self.ai_analyzer.confirm_trend(summary):
+                        self.broker.place_oco_order(symbol, signal['side'], quantity, signal['entry'], signal['target'], signal['stop_loss'])
+                        with self.lock:
+                            self.risk_manager.record_trade(costs['net_pnl'] / (signal['entry'] * quantity) * 100)
+                            self.session_pnl += costs['net_pnl']
+                        self.log(f"EXECUTION: {signal['side']} {symbol} at {signal['entry']}")
+        except Exception as e:
+            self.log(f"Error in {symbol} tick: {e}")
+
+    def start(self):
+        self.log("--- STARTING MULTI-STOCK SESSION ---")
+        universe = list(set(["TCS", "RELIANCE", "INFY", "HDFCBANK", "ICICIBANK"]))
+        self.run_pre_market(universe)
+        
+        symbols = [s['symbol'] for s in self.watchlist]
+        
+        with ThreadPoolExecutor(max_workers=len(symbols)) as executor:
+            while True:
+                try:
+                    if not self.risk_manager.check_constraints():
+                        self.log("CRITICAL: Max risk limit reached. Halting Engine.")
+                        self.update_dashboard()
+                        break
+                        
+                    # Execute all symbols in parallel and wait for results
+                    list(executor.map(self.run_tick, symbols))
+                    
+                    self.update_dashboard()
+                    time.sleep(60)
+                except KeyboardInterrupt:
+                    self.log("Shutdown signal received.")
+                    break
+                except Exception as e:
+                    self.log(f"ENGINE LOOP ERROR: {e}")
+                    time.sleep(10)
+
+if __name__ == "__main__":
+    engine = TradingEngine()
+    engine.start()
