@@ -163,7 +163,7 @@ export default function Dashboard() {
                     </linearGradient>
                   </defs>
                   <Tooltip
-                    contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px' }}
+                    contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '2px' }}
                     itemStyle={{ color: '#fff' }}
                   />
                   <Area type="monotone" dataKey="equity" stroke="#6366f1" fillOpacity={1} fill="url(#colorEquity)" strokeWidth={2} />
@@ -215,7 +215,7 @@ export default function Dashboard() {
                 <p style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <TrendingUp size={12} /> BULLISH SETUPS (LONG)
                 </p>
-                <div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid #1e293b', borderRadius: '8px' }}>
+                <div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid #1e293b', borderRadius: '2px' }}>
                   <table className="position-table compact">
                     <thead style={{ position: 'sticky', top: 0, background: '#0f172a', zIndex: 1 }}>
                       <tr>
@@ -257,7 +257,7 @@ export default function Dashboard() {
                 <p style={{ fontSize: '0.7rem', color: '#ef4444', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <TrendingUp size={12} style={{ transform: 'rotate(90deg)' }} /> BEARISH SETUPS (SHORT)
                 </p>
-                <div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid #1e293b', borderRadius: '8px' }}>
+                <div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid #1e293b', borderRadius: '2px' }}>
                   <table className="position-table compact">
                     <thead style={{ position: 'sticky', top: 0, background: '#0f172a', zIndex: 1 }}>
                       <tr>
