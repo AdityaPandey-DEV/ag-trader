@@ -11,10 +11,10 @@ API_PID=$!
 
 # 3. Start the Frontend (Next.js)
 echo "Starting Dashboard UI..."
-cd dashboard/frontend
+cd frontend
 npm run dev &
 UI_PID=$!
-cd ../..
+cd ..
 
 # 4. Start the Trading Engine (Multi-Stock)
 echo "Starting Multi-Stock Trading Engine..."

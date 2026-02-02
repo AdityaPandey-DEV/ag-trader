@@ -22,7 +22,7 @@ Since we've refactored the code, Render will now run both the **API** and the **
 ## 2. Frontend Dashboard (Vercel)
 
 1.  Connect your repo to [Vercel](https://vercel.com).
-2.  Set the **Root Directory** to `dashboard/frontend`.
+2.  Set the **Root Directory** to `frontend`.
 3.  **Environment Variables**:
     *   `NEXT_PUBLIC_API_URL`: Your Render URL (e.g., `ag-trader-backend.onrender.com`). *Do not include http/https.*
 4.  Deploy!
