@@ -1,7 +1,6 @@
 from dhanhq import dhanhq
 from brokers.base import BaseBroker
 from typing import Dict, List, Optional
-import os
 
 class DhanBroker(BaseBroker):
     def __init__(self, client_id: str, access_token: str):
@@ -21,17 +20,12 @@ class DhanBroker(BaseBroker):
     def get_market_data(self, symbol: str, interval: str) -> Optional[Dict]:
         """Fetch real-time data from Dhan."""
         if not self.dhan:
-            return None # Fallback logic will handle this in TradingEngine
+            return None 
             
         try:
-            # Dhan symbol format is usually different (e.g. INFY-EQ)
-            # For simplicity in this hybrid mode, we query the LTP
-            # Note: For full candle data, Dhan uses /charts or similar
-            # This is a simplified fetch for the 1s LTP update
             ticker = symbol.split('.')[0] if '.' in symbol else symbol
             
-            # Using Dhan's synchronous quote fetch for simplicity in paper trading
-            # In a full live system, we would use their WebSocket
+            # Using Dhan's synchronous quote fetch
             quote = self.dhan.get_quote_data(symbol=ticker, exchange_segment='NSE_EQ', instrument_type='EQUITY')
             
             if quote and quote.get('status') == 'success':
@@ -48,10 +42,22 @@ class DhanBroker(BaseBroker):
             
         return None
 
-    def place_order(self, *args, **kwargs):
-        """Not implemented for Paper Trading."""
+    def place_order(self, symbol: str, side: str, order_type: str, quantity: int, price: Optional[float] = None) -> str:
+        """Paper Trading Placeholder."""
         return "PAPER_ORDER"
 
-    def place_oco_order(self, *args, **kwargs):
-        """Not implemented for Paper Trading."""
+    def place_oco_order(self, symbol: str, side: str, quantity: int, entry_price: float, target: float, stop_loss: float) -> str:
+        """Paper Trading Placeholder."""
         return "PAPER_ORDER"
+
+    def cancel_order(self, order_id: str):
+        """Paper Trading Placeholder."""
+        pass
+
+    def get_order_status(self, order_id: str) -> str:
+        """Paper Trading Placeholder."""
+        return "COMPLETE"
+
+    def get_positions(self) -> List[Dict]:
+        """Paper Trading Placeholder."""
+        return []
