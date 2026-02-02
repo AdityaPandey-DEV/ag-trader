@@ -18,37 +18,40 @@ class DhanBroker(BaseBroker):
         return self.dhan is not None
 
     def get_market_data(self, symbol: str, interval: str) -> Optional[Dict]:
-        """Fetch real-time data from Dhan."""
+        """Fetch real-time data for a single symbol from Dhan."""
+        batch = self.get_market_data_batch([symbol])
+        return batch.get(symbol)
+
+    def get_market_data_batch(self, symbols: List[str]) -> Dict[str, Dict]:
+        """Fetch real-time data for multiple symbols in one go."""
         if not self.dhan:
-            return None 
+            return {}
             
         try:
-            # Dhan usually expects SYMBOL-EQ for NSE Equity
-            clean_symbol = symbol.split('.')[0] if '.' in symbol else symbol
-            dhan_symbol = f"{clean_symbol}-EQ"
+            # Map symbols to Dhan format (SYMBOL-EQ)
+            mapping = {f"{s.split('.')[0] if '.' in s else s}-EQ": s for s in symbols}
+            dhan_securities = {ds: 'NSE_EQ' for ds in mapping.keys()}
             
-            # Correct method name is quote_data
-            # Signature: quote_data(securities={symbol: exchange})
-            response = self.dhan.quote_data(securities={dhan_symbol: 'NSE_EQ'})
+            # Use batch quote_data call
+            response = self.dhan.quote_data(securities=dhan_securities)
             
+            results = {}
             if response and response.get('status') == 'success':
-                # response['data'] is often a dict with symbols as keys
-                data = response.get('data', {}).get(dhan_symbol, {})
-                if not data:
-                    # Alternative response structure check
-                    data = response.get('data', {})
-                
-                return {
-                    "open": data.get('open', 0),
-                    "high": data.get('high', 0),
-                    "low": data.get('low', 0),
-                    "close": data.get('last_price', data.get('lp', 0)),
-                    "volume": data.get('volume', 0)
-                }
+                data_map = response.get('data', {})
+                for ds, target_symbol in mapping.items():
+                    data = data_map.get(ds, {})
+                    if data:
+                        results[target_symbol] = {
+                            "open": data.get('open', 0),
+                            "high": data.get('high', 0),
+                            "low": data.get('low', 0),
+                            "close": data.get('last_price', data.get('lp', 0)),
+                            "volume": data.get('volume', 0)
+                        }
+            return results
         except Exception as e:
-            print(f"[DHAN] Data Fetch Error: {e}")
-            
-        return None
+            print(f"[DHAN] Batch Data Fetch Error: {e}")
+            return {}
 
     def place_order(self, symbol: str, side: str, order_type: str, quantity: int, price: Optional[float] = None) -> str:
         """Paper Trading Placeholder."""

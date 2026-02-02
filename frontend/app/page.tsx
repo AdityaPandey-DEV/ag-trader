@@ -92,8 +92,8 @@ export default function Dashboard() {
         </div>
         <div className="glass-card">
           <p className="stat-label">Trading Mode</p>
-          <p className="stat-value">MOCK LIVE</p>
-          <p style={{ fontSize: '0.7rem', color: '#10b981', marginTop: '8px' }}>● Connected to NSE via yfinance</p>
+          <p className="stat-value">HYBRID LIVE</p>
+          <p style={{ fontSize: '0.7rem', color: '#10b981', marginTop: '8px' }}>● Connected via Dhan Cloud</p>
         </div>
       </div>
 
@@ -157,88 +157,90 @@ export default function Dashboard() {
 
           <div className="glass-card" style={{ marginTop: '1.5rem' }}>
             <h3 className="stat-label"><Zap size={16} style={{ marginBottom: '-3px', marginRight: '8px' }} /> Strategic Trade Planning</h3>
+
             <div className="split-tables">
               {/* LONG SETUPS */}
-              <div>
-                <p style={{ fontSize: '0.65rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ width: '8px', height: '8px', backgroundColor: '#10b981', borderRadius: '50%', display: 'inline-block' }}></span>
-                  {data.logs && data.logs.some((l: any) => l.includes('Zerodha')) ? 'Connected to NSE via Zerodha (Hybrid)' :
-                    data.logs && data.logs.some((l: any) => l.includes('Dhan')) ? 'Connected to NSE via Dhan (Hybrid)' :
-                      'Connected to NSE via yfinance (Mock)'}
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <TrendingUp size={12} /> BULLISH SETUPS (LONG)
                 </p>
-                <table className="position-table compact">
-                  <thead>
-                    <tr>
-                      <th>Symbol</th>
-                      <th>LTP</th>
-                      <th>Entry</th>
-                      <th>Target</th>
-                      <th>SL</th>
-                      <th>Dist.</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.planned_trades && data.planned_trades
-                      .filter((t: any) => t.side === 'LONG')
-                      .sort((a: any, b: any) => a.symbol.localeCompare(b.symbol))
-                      .map((trade: any, i: number) => {
-                        const hasPrice = trade.current && trade.current > 0;
-                        const dist = hasPrice ? ((trade.current - trade.entry) / trade.entry * 100).toFixed(2) : "--";
-                        return (
-                          <tr key={`${trade.symbol}-LONG`}>
-                            <td style={{ fontWeight: 700 }}>{trade.symbol}</td>
-                            <td style={{ color: '#94a3b8' }}>₹{trade.current || "--"}</td>
-                            <td style={{ color: '#10b981', fontWeight: 600 }}>₹{trade.entry}</td>
-                            <td style={{ color: '#34d399', fontSize: '0.75rem' }}>{trade.target}</td>
-                            <td style={{ color: '#f87171', fontSize: '0.75rem' }}>{trade.stop}</td>
-                            <td style={{ color: hasPrice && trade.current <= trade.entry * 1.002 ? '#10b981' : '#64748b', fontWeight: 600 }}>
-                              {dist}{hasPrice ? '%' : ''}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </table>
+                <div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid #1e293b', borderRadius: '8px' }}>
+                  <table className="position-table compact">
+                    <thead style={{ position: 'sticky', top: 0, background: '#0f172a', zIndex: 1 }}>
+                      <tr>
+                        <th>Symbol</th>
+                        <th>LTP</th>
+                        <th>Entry</th>
+                        <th>Target</th>
+                        <th>SL</th>
+                        <th>Dist.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.planned_trades && data.planned_trades
+                        .filter((t: any) => t.side === 'LONG')
+                        .sort((a: any, b: any) => a.symbol.localeCompare(b.symbol))
+                        .map((trade: any, i: number) => {
+                          const hasPrice = trade.current && trade.current > 0;
+                          const dist = hasPrice ? ((trade.current - trade.entry) / trade.entry * 100).toFixed(2) : "--";
+                          return (
+                            <tr key={`${trade.symbol}-LONG`}>
+                              <td style={{ fontWeight: 700 }}>{trade.symbol}</td>
+                              <td style={{ color: '#94a3b8' }}>₹{trade.current || "--"}</td>
+                              <td style={{ color: '#10b981', fontWeight: 600 }}>₹{trade.entry}</td>
+                              <td style={{ color: '#34d399', fontSize: '0.75rem' }}>{trade.target}</td>
+                              <td style={{ color: '#f87171', fontSize: '0.75rem' }}>{trade.stop}</td>
+                              <td style={{ color: hasPrice && trade.current <= trade.entry * 1.002 ? '#10b981' : '#64748b', fontWeight: 600 }}>
+                                {dist}{hasPrice ? '%' : ''}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               {/* SHORT SETUPS */}
-              <div>
+              <div style={{ flex: 1 }}>
                 <p style={{ fontSize: '0.7rem', color: '#ef4444', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <TrendingUp size={12} style={{ transform: 'rotate(90deg)' }} /> BEARISH SETUPS (SHORT)
                 </p>
-                <table className="position-table compact">
-                  <thead>
-                    <tr>
-                      <th>Symbol</th>
-                      <th>LTP</th>
-                      <th>Entry</th>
-                      <th>Target</th>
-                      <th>SL</th>
-                      <th>Dist.</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.planned_trades && data.planned_trades
-                      .filter((t: any) => t.side === 'SHORT')
-                      .sort((a: any, b: any) => a.symbol.localeCompare(b.symbol))
-                      .map((trade: any, i: number) => {
-                        const hasPrice = trade.current && trade.current > 0;
-                        const dist = hasPrice ? ((trade.entry - trade.current) / trade.entry * 100).toFixed(2) : "--";
-                        return (
-                          <tr key={`${trade.symbol}-SHORT`}>
-                            <td style={{ fontWeight: 700 }}>{trade.symbol}</td>
-                            <td style={{ color: '#94a3b8' }}>₹{trade.current || "--"}</td>
-                            <td style={{ color: '#ef4444', fontWeight: 600 }}>₹{trade.entry}</td>
-                            <td style={{ color: '#34d399', fontSize: '0.75rem' }}>{trade.target}</td>
-                            <td style={{ color: '#f87171', fontSize: '0.75rem' }}>{trade.stop}</td>
-                            <td style={{ color: hasPrice && trade.current >= trade.entry * 0.998 ? '#ef4444' : '#64748b', fontWeight: 600 }}>
-                              {dist}{hasPrice ? '%' : ''}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </table>
+                <div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid #1e293b', borderRadius: '8px' }}>
+                  <table className="position-table compact">
+                    <thead style={{ position: 'sticky', top: 0, background: '#0f172a', zIndex: 1 }}>
+                      <tr>
+                        <th>Symbol</th>
+                        <th>LTP</th>
+                        <th>Entry</th>
+                        <th>Target</th>
+                        <th>SL</th>
+                        <th>Dist.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.planned_trades && data.planned_trades
+                        .filter((t: any) => t.side === 'SHORT')
+                        .sort((a: any, b: any) => a.symbol.localeCompare(b.symbol))
+                        .map((trade: any, i: number) => {
+                          const hasPrice = trade.current && trade.current > 0;
+                          const dist = hasPrice ? ((trade.entry - trade.current) / trade.entry * 100).toFixed(2) : "--";
+                          return (
+                            <tr key={`${trade.symbol}-SHORT`}>
+                              <td style={{ fontWeight: 700 }}>{trade.symbol}</td>
+                              <td style={{ color: '#94a3b8' }}>₹{trade.current || "--"}</td>
+                              <td style={{ color: '#ef4444', fontWeight: 600 }}>₹{trade.entry}</td>
+                              <td style={{ color: '#34d399', fontSize: '0.75rem' }}>{trade.target}</td>
+                              <td style={{ color: '#f87171', fontSize: '0.75rem' }}>{trade.stop}</td>
+                              <td style={{ color: hasPrice && trade.current >= trade.entry * 0.998 ? '#ef4444' : '#64748b', fontWeight: 600 }}>
+                                {dist}{hasPrice ? '%' : ''}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
@@ -247,19 +249,15 @@ export default function Dashboard() {
         <div className="side-panel">
           <div className="glass-card">
             <h3 className="stat-label" style={{ marginBottom: '1rem' }}><Search size={16} style={{ marginBottom: '-3px', marginRight: '8px' }} /> Live Watchlist</h3>
-            <div className="watchlist-grid">
-              {data.watchlist.map((stock: any, i: number) => (
+            <div className="watchlist-grid" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+              {data.watchlist.map((symbol: string, i: number) => (
                 <div className="watchlist-item" key={i}>
                   <div>
-                    <p style={{ fontWeight: 700, fontSize: '0.9rem' }}>{stock.symbol}</p>
-                    <p style={{ fontSize: '0.7rem', color: '#64748b' }}>Score: {stock.score}</p>
+                    <p style={{ fontWeight: 700, fontSize: '0.9rem' }}>{symbol}</p>
+                    <p style={{ fontSize: '0.7rem', color: '#64748b' }}>Ready</p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontSize: '0.8rem', color: (stock.sentiment_score || 0) >= 0 ? '#10b981' : '#ef4444' }}>
-                      {(stock.sentiment_score || 0) >= 0 ? '+' : ''}
-                      {((stock.sentiment_score || 0) * 100).toFixed(0)}% Sent.
-                    </p>
-                    <p className="badge badge-long">READY</p>
+                    <p className="badge badge-long">NSE</p>
                   </div>
                 </div>
               ))}

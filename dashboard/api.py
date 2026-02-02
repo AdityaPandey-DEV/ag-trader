@@ -61,7 +61,7 @@ async def lifespan(app: FastAPI):
         }
         trading_state.update(state)
     
-    engine_instance.update_dashboard = sync_update
+    engine_instance.on_update = sync_update
     thread = threading.Thread(target=engine_instance.start, daemon=True)
     thread.start()
     print("[API] Trading Engine thread launched.")
