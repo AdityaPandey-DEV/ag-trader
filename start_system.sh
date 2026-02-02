@@ -4,6 +4,12 @@
 source venv/bin/activate
 pip install -q requests
 
+# 1.5 Pre-Cleanup Ports
+echo "Ensuring ports 8000 and 3000 are free..."
+lsof -ti :8000 | xargs kill -9 2>/dev/null || true
+lsof -ti :3000 | xargs kill -9 2>/dev/null || true
+sleep 1
+
 # 2. Start the Backend API (Dashboard)
 echo "Starting Dashboard API..."
 python3 dashboard/api.py &

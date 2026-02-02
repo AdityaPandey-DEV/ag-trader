@@ -48,12 +48,16 @@ export default function Dashboard() {
 
   const updateCapital = async () => {
     if (!capitalInput) return;
-    await fetch(`${getBaseUrl()}/set_capital`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: parseFloat(capitalInput) })
-    });
-    setCapitalInput("");
+    try {
+      await fetch(`${getBaseUrl()}/set_capital`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: parseFloat(capitalInput) })
+      });
+      setCapitalInput("");
+    } catch (e) {
+      alert("Failed to update capital: " + e);
+    }
   };
 
   if (!data) return (
