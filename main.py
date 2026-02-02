@@ -255,6 +255,7 @@ class TradingEngine:
                         for i in range(0, len(self.watchlist), 50):
                             chunk = self.watchlist[i:i+50]
                             all_data.update(self.data_feed.get_market_data_batch(chunk))
+                            time.sleep(0.2) # Rate limit protection
                     
                     # Update Regime (TSD Logic) using Nifty/Index proxy or avg move
                     if all_data:
@@ -273,7 +274,9 @@ class TradingEngine:
                     if int(time.time()) % 20 == 0:
                         self.log(f"SCANNING: {len(all_data)}/{len(self.watchlist)} stocks active. Regime: {get_regime(self.tsd_count)}")
 
-                    time.sleep(max(0.1, 1.0 - (time.time() - now)))
+                    # Enforce minimum 3-second loop duration to prevent rate limits
+                    elapsed = time.time() - now
+                    time.sleep(max(1.0, 3.0 - elapsed))
                 except KeyboardInterrupt: break
                 except Exception as e: self.log(f"ENGINE ERROR: {e}")
 
