@@ -5,103 +5,24 @@ import time
 from typing import Dict, List, Optional
 from brokers.base import BaseBroker
 
-try:
-    import yfinance as yf
-except ImportError:
-    yf = None
-
 class MockBroker(BaseBroker):
     def __init__(self):
         self.orders = {}
         self.positions = []
         self.balance = 100000.0
-        self.cache = {} # Symbol -> {"data": market_data, "expiry": timestamp}
-        self.CACHE_DURATION = 60 # 1 minute cache to avoid yfinance rate limits
+        self.cache = {} 
 
     def authenticate(self):
         return True
 
     def get_market_data(self, symbol: str, interval: str) -> Optional[Dict]:
-        """Fetch data from NSE (cached 60s) with 1s simulated jitter."""
-        try:
-            if not yf: return None
-            ticker_symbol = symbol if "." in symbol else f"{symbol}.NS"
+        """MockBroker should NOT be used for Data (Execution Only)."""
+        print(f"[MOCK] WARN: get_market_data called! This should not happen in Universal Data Feed mode.")
+        return None
             
-            now = time.time()
-            # Use cache if valid
-            if ticker_symbol in self.cache and now < self.cache[ticker_symbol]['expiry']:
-                cached_data = self.cache[ticker_symbol]['data']
-            else:
-                # Fetch fresh data from NSE
-                ticker = yf.Ticker(ticker_symbol)
-                data = ticker.history(period="1d", interval="1m")
-                if data.empty: return None
-                
-                base_row = data.iloc[-1]
-                prior_row = data.iloc[-2] if len(data) > 1 else base_row
-                
-                cached_data = {
-                    "open": base_row['Open'],
-                    "high": base_row['High'],
-                    "low": base_row['Low'],
-                    "close": base_row['Close'],
-                    "volume": base_row['Volume'],
-                    "prior": {
-                        "open": prior_row['Open'],
-                        "high": prior_row['High'],
-                        "low": prior_row['Low'],
-                        "close": prior_row['Close'],
-                        "volume": prior_row['Volume']
-                    }
-                }
-                self.cache[ticker_symbol] = {
-                    "data": cached_data,
-                    "expiry": now + self.CACHE_DURATION
-                }
-                print(f"[NSE] Fresh data fetched for {ticker_symbol}")
-
-            # Apply 1s Jitter to the cached price for 'Live' feel
-            jitter = 1 + (random.uniform(-0.0005, 0.0005))
-            live_price = round(cached_data['close'] * jitter, 2)
-            
-            # Create a copy with the jittered price
-            result = cached_data.copy()
-            result['close'] = live_price
-            
-                print(f"[LIVE] {ticker_symbol} price matched: ₹{live_price} {'(Cached)' if now < self.cache[ticker_symbol]['expiry'] - self.CACHE_DURATION + 1 else ''}")
-                return result
-                
-        except Exception as e:
-            print(f"MockBroker Error (Falling back to synthetic): {e}")
-
-        # Fallback to pure synthetic data if YFinance fails
-        base_price = 1000.0 + random.uniform(-50, 50)
-        return {
-            "open": base_price,
-            "high": base_price * 1.01,
-            "low": base_price * 0.99,
-            "close": base_price * (1 + random.uniform(-0.01, 0.01)),
-            "volume": int(random.uniform(1000, 50000)),
-            "prior": {"open": base_price, "close": base_price}
-        }
-
     def get_market_data_batch(self, symbols: List[str]) -> Dict[str, Dict]:
-        """Fetch market data for multiple symbols concurrently."""
-        results = {}
-        # Simulate batch with parallel threads
-        from concurrent.futures import ThreadPoolExecutor
-        
-        def fetch_one(s):
-            return s, self.get_market_data(s, "1minute")
-            
-        with ThreadPoolExecutor(max_workers=20) as executor:
-            futures = [executor.submit(fetch_one, s) for s in symbols]
-            for f in futures:
-                try:
-                    sym, data = f.result(timeout=2)
-                    if data: results[sym] = data
-                except: pass
-        return results
+        """MockBroker should NOT be used for Data (Execution Only)."""
+        return {}
 
     def place_order(self, symbol: str, side: str, order_type: str, quantity: int, price: Optional[float] = None) -> str:
         order_id = str(uuid.uuid4())

@@ -56,7 +56,15 @@ class TradingEngine:
             self.kite_broker = KiteBroker(config.KITE_API_KEY, config.KITE_ACCESS_TOKEN)
 
         # Unified Data Feed & Execution
-        self.data_feed = self.dhan_broker or self.kite_broker or self.mock_broker
+        # USER REQUEST: ALWAYS use Live Broker (Dhan/Kite) for Data
+        self.data_feed = self.dhan_broker or self.kite_broker
+        
+        if not self.data_feed:
+             self.log("[CRITICAL] NO LIVE BROKER (Dhan/Kite) DETECTED! Data Feed will not work.")
+             self.log("Please check .env credentials.")
+             # Fallback to Mock ONLY if absolutely necessary to prevent crash, but warn heavily
+             self.data_feed = self.mock_broker
+        
         self.broker = self.mock_broker # Execution starts in MOCK
         
         self.api_url = os.getenv("NEXT_PUBLIC_API_URL", "localhost:8000")
