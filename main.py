@@ -222,8 +222,10 @@ class TradingEngine:
         ]
 
         self.log(f"Screening universe of {len(universe)} symbols...")
-        screened = self.screener.screen(universe)
-        self.watchlist = [s['symbol'] for s in screened][:250]
+        # BYPASS SCREENER FOR SPEED (It blocks for too long)
+        # screened = self.screener.screen(universe)
+        # self.watchlist = [s['symbol'] for s in screened][:250]
+        self.watchlist = universe # Load all directly
         
         with ThreadPoolExecutor(max_workers=50) as executor:
             while True:
