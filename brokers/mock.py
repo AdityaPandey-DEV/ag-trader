@@ -68,12 +68,22 @@ class MockBroker(BaseBroker):
             result = cached_data.copy()
             result['close'] = live_price
             
-            print(f"[LIVE] {ticker_symbol} price matched: ₹{live_price} {'(Cached)' if now < self.cache[ticker_symbol]['expiry'] - self.CACHE_DURATION + 1 else ''}")
-            
-            return result
+                print(f"[LIVE] {ticker_symbol} price matched: ₹{live_price} {'(Cached)' if now < self.cache[ticker_symbol]['expiry'] - self.CACHE_DURATION + 1 else ''}")
+                return result
+                
         except Exception as e:
-            print(f"MockBroker Error: {e}")
-            return None
+            print(f"MockBroker Error (Falling back to synthetic): {e}")
+
+        # Fallback to pure synthetic data if YFinance fails
+        base_price = 1000.0 + random.uniform(-50, 50)
+        return {
+            "open": base_price,
+            "high": base_price * 1.01,
+            "low": base_price * 0.99,
+            "close": base_price * (1 + random.uniform(-0.01, 0.01)),
+            "volume": int(random.uniform(1000, 50000)),
+            "prior": {"open": base_price, "close": base_price}
+        }
 
     def get_market_data_batch(self, symbols: List[str]) -> Dict[str, Dict]:
         """Fetch market data for multiple symbols concurrently."""
