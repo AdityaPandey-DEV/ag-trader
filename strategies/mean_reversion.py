@@ -45,37 +45,42 @@ class mean_reversion_strategy:
         
         # Counter-Trend Short
         if current_price >= resistance:
-            if self.check_rejection_candle(price_data['open'], price_data['high'], 
-                                         price_data['low'], current_price, "SHORT"):
-                if self.check_volume_filter(price_data['volume'], prior_price_data['volume']):
-                    # Calculate Target & SL
-                    # Target = Resistance - (R + 0.4 * |T|)
-                    target = resistance - (base_range + self.config.TARGET_TREND_MULT * abs(trend_shift))
-                    stop_loss = price_data['high'] + (0.001 * current_price) # Small buffer above high
-                    
-                    return {
-                        "side": "SHORT",
-                        "entry": current_price,
-                        "target": target,
-                        "stop_loss": stop_loss,
-                        "reason": "Resistance Rejection"
-                    }
+            wick_ok = self.check_rejection_candle(price_data['open'], price_data['high'], 
+                                               price_data['low'], current_price, "SHORT")
+            vol_ok = self.check_volume_filter(price_data['volume'], prior_price_data['volume'])
+            
+            if not wick_ok: print(f"[STRATEGY] {price_data.get('symbol', 'SYM')} Short Rejected: No Wick")
+            if not vol_ok: print(f"[STRATEGY] {price_data.get('symbol', 'SYM')} Short Rejected: Low Volume")
+
+            if wick_ok and vol_ok:
+                target = resistance - (base_range + self.config.TARGET_TREND_MULT * abs(trend_shift))
+                stop_loss = price_data['high'] + (0.001 * current_price)
+                return {
+                    "side": "SHORT",
+                    "entry": current_price,
+                    "target": target,
+                    "stop_loss": stop_loss,
+                    "reason": "Resistance Rejection"
+                }
 
         # Counter-Trend Long
         if current_price <= support:
-            if self.check_rejection_candle(price_data['open'], price_data['high'], 
-                                         price_data['low'], current_price, "LONG"):
-                if self.check_volume_filter(price_data['volume'], prior_price_data['volume']):
-                    # Target = Support + (R + 0.4 * |T|)
-                    target = support + (base_range + self.config.TARGET_TREND_MULT * abs(trend_shift))
-                    stop_loss = price_data['low'] - (0.001 * current_price)
-                    
-                    return {
-                        "side": "LONG",
-                        "entry": current_price,
-                        "target": target,
-                        "stop_loss": stop_loss,
-                        "reason": "Support Rejection"
-                    }
+            wick_ok = self.check_rejection_candle(price_data['open'], price_data['high'], 
+                                               price_data['low'], current_price, "LONG")
+            vol_ok = self.check_volume_filter(price_data['volume'], prior_price_data['volume'])
+            
+            if not wick_ok: print(f"[STRATEGY] {price_data.get('symbol', 'SYM')} Long Rejected: No Wick")
+            if not vol_ok: print(f"[STRATEGY] {price_data.get('symbol', 'SYM')} Long Rejected: Low Volume")
+
+            if wick_ok and vol_ok:
+                target = support + (base_range + self.config.TARGET_TREND_MULT * abs(trend_shift))
+                stop_loss = price_data['low'] - (0.001 * current_price)
+                return {
+                    "side": "LONG",
+                    "entry": current_price,
+                    "target": target,
+                    "stop_loss": stop_loss,
+                    "reason": "Support Rejection"
+                }
 
         return None

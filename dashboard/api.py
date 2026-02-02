@@ -90,12 +90,32 @@ async def update_state(request: Request):
     return {"status": "success"}
 
 @app.post("/killswitch")
-async def toggle_kill_switch():
+async def toggle_killswitch():
     if engine_instance:
         engine_instance.kill_switch = not engine_instance.kill_switch
-        trading_state["kill_switch"] = engine_instance.kill_switch
+        engine_instance.update_dashboard()
         status = "STOPPED" if engine_instance.kill_switch else "ARMED"
-        engine_instance.log(f"SYSTEM {status} via Dashboard.")
+        return {"status": status}
+    return {"status": "error"}
+
+@app.post("/toggle_paper")
+async def toggle_paper(data: dict):
+    if engine_instance:
+        enabled = data.get("enabled", True)
+        engine_instance.toggle_paper_mode(enabled)
+        return {"status": "success", "paper_mode": engine_instance.paper_mode}
+    return {"status": "error"}
+
+@app.post("/set_capital")
+async def set_capital(data: dict):
+    if engine_instance:
+        amount = data.get("amount", 100000.0)
+        engine_instance.set_initial_capital(float(amount))
+        return {"status": "success", "capital": engine_instance.initial_capital}
+    return {"status": "error"}
+
+@app.get("/state")
+async def get_current_state():
     return {"status": "success", "kill_switch": trading_state.get("kill_switch", False)}
 
 @app.websocket("/ws")
