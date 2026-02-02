@@ -14,20 +14,12 @@ export default function Dashboard() {
   const [connected, setConnected] = useState(false);
   const [capitalInput, setCapitalInput] = useState("");
 
-  const getBaseUrl = () => {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'localhost:8000';
-    const httpProtocol = apiBase.includes('localhost') ? 'http' : 'https';
-    return apiBase.startsWith('http') ? apiBase : `${httpProtocol}://${apiBase}`;
-  };
-
   useEffect(() => {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'localhost:8000';
-    const wsProtocol = apiBase.includes('localhost') ? 'ws' : 'wss';
-    const wsUrl = apiBase.startsWith('http')
-      ? apiBase.replace(/^http/, 'ws') + '/ws'
-      : `${wsProtocol}://${apiBase}/ws`;
-
+    // WebSocket: Direct connection to backend
+    // Since proxy rewrites don't handle WS upgrade reliably in dev mode
+    const wsUrl = "ws://127.0.0.1:8000/ws";
     const ws = new WebSocket(wsUrl);
+
     ws.onopen = () => setConnected(true);
     ws.onmessage = (event) => setData(JSON.parse(event.data));
     ws.onclose = () => setConnected(false);
@@ -35,11 +27,11 @@ export default function Dashboard() {
   }, []);
 
   const toggleKillSwitch = async () => {
-    await fetch(`${getBaseUrl()}/killswitch`, { method: 'POST' });
+    await fetch('/api/killswitch', { method: 'POST' });
   };
 
   const togglePaperMode = async () => {
-    await fetch(`${getBaseUrl()}/toggle_paper`, {
+    await fetch('/api/toggle_paper', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled: !data.paper_mode })
@@ -49,7 +41,7 @@ export default function Dashboard() {
   const updateCapital = async () => {
     if (!capitalInput) return;
     try {
-      await fetch(`${getBaseUrl()}/set_capital`, {
+      await fetch('/api/set_capital', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: parseFloat(capitalInput) })
