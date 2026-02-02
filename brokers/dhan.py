@@ -23,18 +23,26 @@ class DhanBroker(BaseBroker):
             return None 
             
         try:
-            ticker = symbol.split('.')[0] if '.' in symbol else symbol
+            # Dhan usually expects SYMBOL-EQ for NSE Equity
+            clean_symbol = symbol.split('.')[0] if '.' in symbol else symbol
+            dhan_symbol = f"{clean_symbol}-EQ"
             
-            # Using Dhan's synchronous quote fetch
-            quote = self.dhan.get_quote_data(symbol=ticker, exchange_segment='NSE_EQ', instrument_type='EQUITY')
+            # Correct method name is quote_data
+            # Signature: quote_data(securities={symbol: exchange})
+            response = self.dhan.quote_data(securities={dhan_symbol: 'NSE_EQ'})
             
-            if quote and quote.get('status') == 'success':
-                data = quote.get('data', {})
+            if response and response.get('status') == 'success':
+                # response['data'] is often a dict with symbols as keys
+                data = response.get('data', {}).get(dhan_symbol, {})
+                if not data:
+                    # Alternative response structure check
+                    data = response.get('data', {})
+                
                 return {
                     "open": data.get('open', 0),
                     "high": data.get('high', 0),
                     "low": data.get('low', 0),
-                    "close": data.get('lastPrice', 0),
+                    "close": data.get('last_price', data.get('lp', 0)),
                     "volume": data.get('volume', 0)
                 }
         except Exception as e:
