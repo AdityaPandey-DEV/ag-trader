@@ -9,6 +9,7 @@ from core.risk_manager import RiskManager
 from strategies.mean_reversion import mean_reversion_strategy
 from brokers.mock import MockBroker
 from brokers.dhan import DhanBroker
+from brokers.kite import KiteBroker
 import pandas as pd
 
 from utils.tax_calculator import TaxCalculator
@@ -30,14 +31,24 @@ class TradingEngine:
         self.screenshotter = ChartScreenshotter()
         self.screener = StockScreener(api_key=config.GEMINI_API_KEY)
         
-        # HYBRID LOGIC: Dhan for Data, Mock for Execution
+        # HYBRID LOGIC: Real-Time Data (Kite or Dhan) + Mock Execution
         self.broker = MockBroker() # Always Mock for Paper Trading
-        self.data_feed = DhanBroker(config.DHAN_CLIENT_ID, config.DHAN_ACCESS_TOKEN)
         
+        # Prioritize Kite, then Dhan for high-speed data feed
+        if config.KITE_API_KEY and "your_" not in config.KITE_API_KEY:
+            self.data_feed = KiteBroker(config.KITE_API_KEY, config.KITE_ACCESS_TOKEN)
+            feed_name = "Zerodha (Kite)"
+        elif config.DHAN_CLIENT_ID and "your_" not in config.DHAN_CLIENT_ID:
+            self.data_feed = DhanBroker(config.DHAN_CLIENT_ID, config.DHAN_ACCESS_TOKEN)
+            feed_name = "Dhan"
+        else:
+            self.data_feed = self.broker # Fallback to Mock (yfinance)
+            feed_name = "NSE (Mock/yfinance)"
+            
         self.tsd_count = 0
         self.watchlist = []
         self.planned_trades = []
-        self.logs = ["[SYSTEM] Hybrid Engine initialized (Dhan Data + Mock Execution)."]
+        self.logs = [f"[SYSTEM] Hybrid Engine initialized ({feed_name} Data + Mock Execution)."]
         self.session_pnl = 0.0
         self.lock = threading.Lock()
         self.levels = {} 

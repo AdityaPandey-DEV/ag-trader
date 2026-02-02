@@ -160,8 +160,11 @@ export default function Dashboard() {
             <div className="split-tables">
               {/* LONG SETUPS */}
               <div>
-                <p style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <TrendingUp size={12} /> BULLISH SETUPS (LONG)
+                <p style={{ fontSize: '0.65rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ width: '8px', height: '8px', backgroundColor: '#10b981', borderRadius: '50%', display: 'inline-block' }}></span>
+                  {data.logs && data.logs.some((l: any) => l.includes('Zerodha')) ? 'Connected to NSE via Zerodha (Hybrid)' :
+                    data.logs && data.logs.some((l: any) => l.includes('Dhan')) ? 'Connected to NSE via Dhan (Hybrid)' :
+                      'Connected to NSE via yfinance (Mock)'}
                 </p>
                 <table className="position-table compact">
                   <thead>
