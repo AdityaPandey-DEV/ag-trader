@@ -3,10 +3,12 @@
 Follow these steps to deploy your trading system 24/7 for free.
 
 ### 🌐 Cloud & Network Configuration
-When deploying to Render/Vercel, you need to tell the Engine where the API is:
+To link your Dashboard and Engine, you only need one variable now:
 
-1.  **BACKEND_URL**: In your backend environment (Render), set this to your API's public URL (e.g., `https://my-api.onrender.com`). The Engine uses this to push updates if running in distributed mode.
-2.  **NEXT_PUBLIC_API_URL**: In your frontend environment (Vercel), set this to your API's host (e.g., `my-api.onrender.com`). Do not include `http://` or `https://` if using the websocket auto-protocol logic.
+*   **NEXT_PUBLIC_API_URL**: 
+    *   **In Render (Backend)**: Set this to your app's host name (e.g., `my-api.onrender.com`).
+    *   **In Vercel (Frontend)**: Set this to the same host name.
+    *   *Note: The system now automatically detects `http://` for localhost and `https://` for cloud. You just provide the host!*
 
 ## 1. Backend & Engine (Render.com)
 

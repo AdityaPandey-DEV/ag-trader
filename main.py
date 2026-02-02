@@ -58,8 +58,14 @@ class TradingEngine:
         # Dashboard push function (set by api.py)
         self.on_update = lambda symbol="MULTI": None
         
-        # API URL for Cloud or Local
-        self.api_url = os.getenv("BACKEND_URL", "http://localhost:8000")
+        # API URL - Consolidated to NEXT_PUBLIC_API_URL (used by Vercel & Render)
+        api_host = os.getenv("NEXT_PUBLIC_API_URL", "localhost:8000")
+        # Ensure protocol is present
+        if "://" not in api_host:
+            protocol = "http" if "localhost" in api_host else "https"
+            self.api_url = f"{protocol}://{api_host}"
+        else:
+            self.api_url = api_host
 
     def log(self, message: str):
         with self.lock:
