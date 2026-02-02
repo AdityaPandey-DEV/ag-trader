@@ -71,9 +71,26 @@ class MockBroker(BaseBroker):
             print(f"[LIVE] {ticker_symbol} price matched: ₹{live_price} {'(Cached)' if now < self.cache[ticker_symbol]['expiry'] - self.CACHE_DURATION + 1 else ''}")
             
             return result
-        except Exception as e:
             print(f"MockBroker Error: {e}")
             return None
+
+    def get_market_data_batch(self, symbols: List[str]) -> Dict[str, Dict]:
+        """Fetch market data for multiple symbols concurrently."""
+        results = {}
+        # Simulate batch with parallel threads
+        from concurrent.futures import ThreadPoolExecutor
+        
+        def fetch_one(s):
+            return s, self.get_market_data(s, "1minute")
+            
+        with ThreadPoolExecutor(max_workers=20) as executor:
+            futures = [executor.submit(fetch_one, s) for s in symbols]
+            for f in futures:
+                try:
+                    sym, data = f.result(timeout=2)
+                    if data: results[sym] = data
+                except: pass
+        return results
 
     def place_order(self, symbol: str, side: str, order_type: str, quantity: int, price: Optional[float] = None) -> str:
         order_id = str(uuid.uuid4())
