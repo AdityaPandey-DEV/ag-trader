@@ -83,6 +83,9 @@ class TradingEngine:
                 self.log(f"WARNING: Could not fetch data for {symbol}. Skipping tick.")
                 return
 
+            # Current Market Price
+            current_price = market_data['close']
+
             # Calculate Volatility levels ONLY ONCE if not exists
             if symbol not in self.levels:
                 high_24h = market_data.get('high', current_price * 1.01)
