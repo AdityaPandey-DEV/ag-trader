@@ -8,6 +8,7 @@ from core.indicators import calculate_base_range, calculate_trend_shift_linreg, 
 from core.risk_manager import RiskManager
 from strategies.mean_reversion import mean_reversion_strategy
 from brokers.mock import MockBroker
+from brokers.dhan import DhanBroker
 import pandas as pd
 
 from utils.tax_calculator import TaxCalculator
@@ -28,14 +29,19 @@ class TradingEngine:
         self.ai_analyzer = AITrendAnalyzer(api_key=config.GEMINI_API_KEY)
         self.screenshotter = ChartScreenshotter()
         self.screener = StockScreener(api_key=config.GEMINI_API_KEY)
+        
+        # HYBRID LOGIC: Dhan for Data, Mock for Execution
+        self.broker = MockBroker() # Always Mock for Paper Trading
+        self.data_feed = DhanBroker(config.DHAN_CLIENT_ID, config.DHAN_ACCESS_TOKEN)
+        
         self.tsd_count = 0
         self.watchlist = []
         self.planned_trades = []
-        self.logs = ["[SYSTEM] Multi-threaded Engine initialized."]
+        self.logs = ["[SYSTEM] Hybrid Engine initialized (Dhan Data + Mock Execution)."]
         self.session_pnl = 0.0
         self.lock = threading.Lock()
         self.levels = {} 
-        self.kill_switch = False # Persistent state
+        self.kill_switch = False
 
     def log(self, message: str):
         with self.lock:
@@ -78,7 +84,13 @@ class TradingEngine:
             return
 
         try:
-            market_data = self.broker.get_market_data(symbol, "5minute")
+            # Try Dhan first, fallback to Mock (yfinance) if Dhan fails or keys are missing
+            market_data = None
+            if self.data_feed.authenticate():
+                market_data = self.data_feed.get_market_data(symbol, "1minute")
+            
+            if not market_data:
+                market_data = self.broker.get_market_data(symbol, "1minute")
             
             if not market_data or 'close' not in market_data:
                 self.log(f"WARNING: Could not fetch data for {symbol}. Skipping tick.")
