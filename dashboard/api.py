@@ -35,30 +35,34 @@ trading_state = {
     "logs": ["[SYSTEM] Dashboard started. Waiting for Engine..."]
 }
 
+# Global engine reference for the killswitch endpoint
+engine_instance = None
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global engine_instance
     # Startup: Initialize and start the engine
     print("[API] Starting background Trading Engine...")
-    engine = TradingEngine()
+    engine_instance = TradingEngine()
     
     def sync_update(current_symbol="MULTI"):
         state = {
-            "regime": get_regime(engine.tsd_count),
-            "tsd_count": engine.tsd_count,
-            "risk_consumed": engine.risk_manager.daily_pnl,
+            "regime": get_regime(engine_instance.tsd_count),
+            "tsd_count": engine_instance.tsd_count,
+            "risk_consumed": engine_instance.risk_manager.daily_pnl,
             "max_drawdown": config.MAX_SESSION_DRAWDOWN_PCT,
-            "kill_switch": False,
-            "pnl": round(engine.session_pnl, 2),
+            "kill_switch": engine_instance.kill_switch,
+            "pnl": round(engine_instance.session_pnl, 2),
             "current_symbol": current_symbol,
-            "watchlist": engine.watchlist,
-            "positions": engine.broker.positions,
-            "planned_trades": engine.planned_trades,
-            "logs": engine.logs
+            "watchlist": engine_instance.watchlist,
+            "positions": engine_instance.broker.positions,
+            "planned_trades": engine_instance.planned_trades,
+            "logs": engine_instance.logs
         }
         trading_state.update(state)
     
-    engine.update_dashboard = sync_update
-    thread = threading.Thread(target=engine.start, daemon=True)
+    engine_instance.update_dashboard = sync_update
+    thread = threading.Thread(target=engine_instance.start, daemon=True)
     thread.start()
     print("[API] Trading Engine thread launched.")
     yield
@@ -87,8 +91,12 @@ async def update_state(request: Request):
 
 @app.post("/killswitch")
 async def toggle_kill_switch():
-    trading_state["kill_switch"] = not trading_state["kill_switch"]
-    return {"status": "success", "kill_switch": trading_state["kill_switch"]}
+    if engine_instance:
+        engine_instance.kill_switch = not engine_instance.kill_switch
+        trading_state["kill_switch"] = engine_instance.kill_switch
+        status = "STOPPED" if engine_instance.kill_switch else "ARMED"
+        engine_instance.log(f"SYSTEM {status} via Dashboard.")
+    return {"status": "success", "kill_switch": trading_state.get("kill_switch", False)}
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

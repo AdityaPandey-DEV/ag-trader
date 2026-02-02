@@ -34,7 +34,8 @@ class TradingEngine:
         self.logs = ["[SYSTEM] Multi-threaded Engine initialized."]
         self.session_pnl = 0.0
         self.lock = threading.Lock()
-        self.levels = {} # Symbol -> (resistance, support, base_range)
+        self.levels = {} 
+        self.kill_switch = False # Persistent state
 
     def log(self, message: str):
         with self.lock:
@@ -73,7 +74,7 @@ class TradingEngine:
         self.update_dashboard()
 
     def run_tick(self, symbol: str):
-        if not self.risk_manager.check_constraints():
+        if self.kill_switch or not self.risk_manager.check_constraints():
             return
 
         try:
