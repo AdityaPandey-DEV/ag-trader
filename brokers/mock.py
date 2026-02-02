@@ -71,6 +71,7 @@ class MockBroker(BaseBroker):
             print(f"[LIVE] {ticker_symbol} price matched: ₹{live_price} {'(Cached)' if now < self.cache[ticker_symbol]['expiry'] - self.CACHE_DURATION + 1 else ''}")
             
             return result
+        except Exception as e:
             print(f"MockBroker Error: {e}")
             return None
 
