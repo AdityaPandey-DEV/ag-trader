@@ -56,7 +56,7 @@ export default function Dashboard() {
       });
       setCapitalInput("");
     } catch (e) {
-      alert("Failed to update capital: " + e);
+      alert(`Error hitting ${getBaseUrl()}: ` + e);
     }
   };
 
