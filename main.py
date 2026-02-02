@@ -139,7 +139,6 @@ class TradingEngine:
         if self.kill_switch: return
 
         try:
-        try:
             market_data = pre_fetched_data
             # CRITICAL: Do NOT fetch individually if batch missing. This causes Rate Limit (805) explosion.
             if not market_data:
