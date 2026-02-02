@@ -1,7 +1,11 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi.middleware.cors import CORSMiddleware
 import threading
 import os
 import sys
+import asyncio
+import json
+from contextlib import asynccontextmanager
 
 # Ensure project root is in path for cloud deployment
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -14,20 +18,7 @@ try:
 except ImportError:
     class ClientDisconnected(Exception): pass
 
-from fastapi.middleware.cors import CORSMiddleware
-import asyncio
-import json
-
-app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Initial Shared state (will be updated by the TradingEngine)
+# Initial Shared state
 trading_state = {
     "regime": "WAITING",
     "tsd_count": 0,
@@ -44,12 +35,12 @@ trading_state = {
     "logs": ["[SYSTEM] Dashboard started. Waiting for Engine..."]
 }
 
-@app.on_event("startup")
-def startup_event():
-    """Starts the Trading Engine in a background thread on deployment."""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Initialize and start the engine
+    print("[API] Starting background Trading Engine...")
     engine = TradingEngine()
-    # Override engine's update_dashboard to update local trading_state directly
-    # to avoid unnecessary HTTP requests in a single-process deployment
+    
     def sync_update(current_symbol="MULTI"):
         state = {
             "regime": get_regime(engine.tsd_count),
@@ -69,6 +60,18 @@ def startup_event():
     engine.update_dashboard = sync_update
     thread = threading.Thread(target=engine.start, daemon=True)
     thread.start()
+    print("[API] Trading Engine thread launched.")
+    yield
+    print("[API] Shutting down...")
+
+app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/status")
 async def get_status():
@@ -92,7 +95,6 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     while True:
         try:
-            # Broadcast the REAL state received from the engine
             await websocket.send_text(json.dumps(trading_state))
             await asyncio.sleep(1) # Refresh rate
         except (WebSocketDisconnect, ClientDisconnected, RuntimeError):
