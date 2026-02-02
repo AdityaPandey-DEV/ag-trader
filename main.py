@@ -82,11 +82,18 @@ class TradingEngine:
                 self.log(f"WARNING: Could not fetch data for {symbol}. Skipping tick.")
                 return
 
-            # Dynamic levels
+            # Dynamic Volatility-based Levels (Real Market Structure)
             current_price = market_data['close']
-            resistance = current_price * 1.01
-            support = current_price * 0.99
-            base_range = current_price * 0.005
+            high_24h = market_data.get('high', current_price)
+            low_24h = market_data.get('low', current_price)
+            
+            # Use a slightly wider range for setups to avoid 'fake' fixed look
+            # Range = max(0.5%, (High-Low)/Close * 0.2)
+            vol_range = max(0.005, (high_24h - low_24h) / current_price * 0.2)
+            
+            resistance = current_price * (1 + vol_range)
+            support = current_price * (1 - vol_range)
+            base_range = current_price * (vol_range * 0.5)
             trend_shift = current_price * 0.001
             regime = get_regime(self.tsd_count)
             
