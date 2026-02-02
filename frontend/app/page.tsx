@@ -152,34 +152,78 @@ export default function Dashboard() {
           </div>
 
           <div className="glass-card" style={{ marginTop: '1.5rem' }}>
-            <h3 className="stat-label"><Zap size={16} style={{ marginBottom: '-3px', marginRight: '8px' }} /> Planned Trades (Upcoming)</h3>
-            <table className="position-table">
-              <thead>
-                <tr>
-                  <th>Symbol</th>
-                  <th>Side</th>
-                  <th>Limit Entry</th>
-                  <th>Target</th>
-                  <th>Stop Loss</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.planned_trades && data.planned_trades.map((trade: any, i: number) => (
-                  <tr key={i}>
-                    <td style={{ fontWeight: 700 }}>{trade.symbol}</td>
-                    <td><span className={`badge ${trade.side === 'SHORT' ? 'badge-short' : 'badge-long'}`}>{trade.side}</span></td>
-                    <td style={{ color: 'var(--primary)', fontWeight: 600 }}>₹{trade.entry.toFixed(2)}</td>
-                    <td style={{ color: '#10b981' }}>{trade.target.toFixed(2)}</td>
-                    <td style={{ color: '#ef4444' }}>{trade.stop.toFixed(2)}</td>
-                  </tr>
-                ))}
-                {(!data.planned_trades || data.planned_trades.length === 0) && (
-                  <tr>
-                    <td colSpan={5} style={{ textAlign: 'center', color: '#64748b', padding: '1.5rem' }}>Analyzing market for setups...</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+            <h3 className="stat-label"><Zap size={16} style={{ marginBottom: '-3px', marginRight: '8px' }} /> Strategic Trade Planning</h3>
+            <div className="split-tables">
+              {/* LONG SETUPS */}
+              <div>
+                <p style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <TrendingUp size={12} /> BULLISH SETUPS (LONG)
+                </p>
+                <table className="position-table">
+                  <thead>
+                    <tr>
+                      <th>Symbol</th>
+                      <th>LTP</th>
+                      <th>Entry</th>
+                      <th>Dist.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.planned_trades && data.planned_trades.filter((t: any) => t.side === 'LONG').map((trade: any, i: number) => {
+                      const dist = ((trade.current - trade.entry) / trade.entry * 100).toFixed(2);
+                      return (
+                        <tr key={i}>
+                          <td style={{ fontWeight: 700 }}>{trade.symbol}</td>
+                          <td style={{ color: '#94a3b8' }}>₹{trade.current}</td>
+                          <td style={{ color: '#10b981', fontWeight: 600 }}>₹{trade.entry}</td>
+                          <td style={{ color: trade.current <= trade.entry * 1.002 ? '#10b981' : '#64748b' }}>
+                            {dist}%
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {(!data.planned_trades || data.planned_trades.filter((t: any) => t.side === 'LONG').length === 0) && (
+                      <tr><td colSpan={4} style={{ textAlign: 'center', color: '#475569', padding: '1rem' }}>No long setups</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* SHORT SETUPS */}
+              <div>
+                <p style={{ fontSize: '0.7rem', color: '#ef4444', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <TrendingUp size={12} style={{ transform: 'rotate(90deg)' }} /> BEARISH SETUPS (SHORT)
+                </p>
+                <table className="position-table">
+                  <thead>
+                    <tr>
+                      <th>Symbol</th>
+                      <th>LTP</th>
+                      <th>Entry</th>
+                      <th>Dist.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.planned_trades && data.planned_trades.filter((t: any) => t.side === 'SHORT').map((trade: any, i: number) => {
+                      const dist = ((trade.entry - trade.current) / trade.entry * 100).toFixed(2);
+                      return (
+                        <tr key={i}>
+                          <td style={{ fontWeight: 700 }}>{trade.symbol}</td>
+                          <td style={{ color: '#94a3b8' }}>₹{trade.current}</td>
+                          <td style={{ color: '#ef4444', fontWeight: 600 }}>₹{trade.entry}</td>
+                          <td style={{ color: trade.current >= trade.entry * 0.998 ? '#ef4444' : '#64748b' }}>
+                            {dist}%
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {(!data.planned_trades || data.planned_trades.filter((t: any) => t.side === 'SHORT').length === 0) && (
+                      <tr><td colSpan={4} style={{ textAlign: 'center', color: '#475569', padding: '1rem' }}>No short setups</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
 

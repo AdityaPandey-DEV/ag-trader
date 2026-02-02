@@ -94,8 +94,22 @@ class TradingEngine:
             with self.lock:
                 # Remove old plans for this symbol and add new ones
                 self.planned_trades = [p for p in self.planned_trades if p['symbol'] != symbol]
-                self.planned_trades.append({"symbol": symbol, "side": "LONG", "entry": round(support, 2), "target": round(resistance * 0.998, 2), "stop": round(support * 0.995, 2)})
-                self.planned_trades.append({"symbol": symbol, "side": "SHORT", "entry": round(resistance, 2), "target": round(support * 1.002, 2), "stop": round(resistance * 1.005, 2)})
+                self.planned_trades.append({
+                    "symbol": symbol, 
+                    "side": "LONG", 
+                    "current": round(current_price, 2),
+                    "entry": round(support, 2), 
+                    "target": round(resistance * 0.998, 2), 
+                    "stop": round(support * 0.995, 2)
+                })
+                self.planned_trades.append({
+                    "symbol": symbol, 
+                    "side": "SHORT", 
+                    "current": round(current_price, 2),
+                    "entry": round(resistance, 2), 
+                    "target": round(support * 1.002, 2), 
+                    "stop": round(resistance * 1.005, 2)
+                })
 
             signal = self.strategy.generate_signal(
                 market_data, market_data, resistance, support, 

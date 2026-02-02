@@ -179,3 +179,16 @@ button.primary:hover {
 button.danger {
   background: var(--danger);
 }
+
+.split-tables {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 1024px) {
+  .split-tables {
+    grid-template-columns: 1fr;
+  }
+}
