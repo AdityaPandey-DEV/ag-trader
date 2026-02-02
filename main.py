@@ -26,6 +26,10 @@ class TradingEngine:
             max_losses=config.MAX_CONSECUTIVE_LOSSES
         )
         self.strategy = mean_reversion_strategy(config)
+        self.tax_calculator = TaxCalculator()
+        self.ai_analyzer = AITrendAnalyzer(api_key=config.GEMINI_API_KEY)
+        self.screenshotter = ChartScreenshotter()
+        self.screener = StockScreener()
         
         # State
         self.paper_mode = True # Default to paper for safety
