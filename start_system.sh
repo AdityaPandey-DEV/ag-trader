@@ -16,9 +16,9 @@ npm run dev &
 UI_PID=$!
 cd ..
 
-# 4. Start the Trading Engine (Multi-Stock)
-echo "Starting Multi-Stock Trading Engine..."
-python3 main.py
+# 4. Wait for system processes
+echo "System processes started. Press CTRL+C to stop everything."
+wait $API_PID $UI_PID
 
 # Cleanup on exit
 trap "kill $API_PID $UI_PID" EXIT

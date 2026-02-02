@@ -18,7 +18,7 @@ export default function Dashboard() {
     const wsProtocol = apiBase.includes('localhost') ? 'ws' : 'wss';
 
     const wsUrl = apiBase.startsWith('http')
-      ? apiBase.replace('http', 'ws')
+      ? apiBase.replace(/^http/, 'ws') + '/ws'
       : `${wsProtocol}://${apiBase}/ws`;
 
     const ws = new WebSocket(wsUrl);
