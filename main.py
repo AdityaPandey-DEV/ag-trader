@@ -116,8 +116,17 @@ class TradingEngine:
                     "entry": round(resistance, 2), "target": round(support * 1.002, 2), "stop": round(resistance * 1.005, 2)
                 })
 
+            # Level Touch Notification
+            if current_price <= support:
+                self.log(f"TOUCH: {symbol} at Support ₹{support}")
+            elif current_price >= resistance:
+                self.log(f"TOUCH: {symbol} at Resistance ₹{resistance}")
+
+            # Extract prior data for strategy comparison
+            prior_data = market_data.get('prior', market_data)
+
             signal = self.strategy.generate_signal(
-                market_data, market_data, resistance, support, 
+                market_data, prior_data, resistance, support, 
                 regime, base_range, trend_shift
             )
             
@@ -130,12 +139,24 @@ class TradingEngine:
                 
                 if costs['net_pnl'] > 0:
                     summary = f"Symbol: {symbol}, Side: {signal['side']}, Entry: {signal['entry']}, Target: {signal['target']}"
-                    if self.ai_analyzer.confirm_trend(summary):
+                    # Skip AI Analyzer for MOCK mode or if Key is missing for faster execution
+                    is_confirmed = True
+                    if config.DEFAULT_BROKER != "MOCK" and config.GEMINI_API_KEY:
+                        is_confirmed = self.ai_analyzer.confirm_trend(summary)
+                    
+                    if is_confirmed:
                         self.broker.place_oco_order(symbol, signal['side'], quantity, signal['entry'], signal['target'], signal['stop_loss'])
                         with self.lock:
                             self.risk_manager.record_trade(costs['net_pnl'] / (signal['entry'] * quantity) * 100)
                             self.session_pnl += costs['net_pnl']
-                        self.log(f"EXECUTION: {signal['side']} {symbol} at {signal['entry']}")
+                        self.log(f"EXECUTION: {signal['side']} {symbol} at {signal['entry']} (Target: {signal['target']})")
+                    else:
+                        self.log(f"AI FILTER: {symbol} signal rejected by AITrendAnalyzer.")
+                else:
+                    self.log(f"COST FILTER: {symbol} signal skipped (Potential Net PnL ₹{costs['net_pnl']} <= 0)")
+            elif current_price <= support or current_price >= resistance:
+                # The price hit the level but strategy conditions (candle/volume) weren't met
+                self.log(f"STRATEGY: {symbol} level hit but no Rejection Candle confirmation yet.")
             
             # Real-time dashboard push after EVERY stock update
             self.update_dashboard(symbol)

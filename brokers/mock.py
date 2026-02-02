@@ -30,21 +30,28 @@ class MockBroker(BaseBroker):
             data = ticker.history(period="1d", interval="1m")
             if data.empty: return None
             
-            base_price = data.iloc[-1]['Close']
+            base_row = data.iloc[-1]
+            prior_row = data.iloc[-2] if len(data) > 1 else base_row
             
             # Simulate real-time jitter (+/- 0.05%) so LTP and Dist move every second
             jitter = 1 + (random.uniform(-0.0005, 0.0005))
-            live_price = round(base_price * jitter, 2)
+            live_price = round(base_row['Close'] * jitter, 2)
             
-            # Print for user to see the live feed in terminal
             print(f"[LIVE] {ticker_symbol} price matched: ₹{live_price}")
             
             return {
-                "open": data.iloc[-1]['Open'],
-                "high": data.iloc[-1]['High'],
-                "low": data.iloc[-1]['Low'],
+                "open": base_row['Open'],
+                "high": base_row['High'],
+                "low": base_row['Low'],
                 "close": live_price,
-                "volume": data.iloc[-1]['Volume']
+                "volume": base_row['Volume'],
+                "prior": {
+                    "open": prior_row['Open'],
+                    "high": prior_row['High'],
+                    "low": prior_row['Low'],
+                    "close": prior_row['Close'],
+                    "volume": prior_row['Volume']
+                }
             }
         except Exception:
             return None
