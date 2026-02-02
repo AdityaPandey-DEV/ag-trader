@@ -33,11 +33,15 @@ class MockBroker(BaseBroker):
                 return None
                 
             last_row = data.iloc[-1]
+            price = round(last_row['Close'], 2)
+            # Log for transparency so user sees it's real data
+            print(f"[DATA] Fetched {ticker_symbol} price from NSE: ₹{price}")
+            
             return {
                 "open": last_row['Open'],
                 "high": last_row['High'],
                 "low": last_row['Low'],
-                "close": last_row['Close'],
+                "close": price,
                 "volume": last_row['Volume']
             }
         except Exception:

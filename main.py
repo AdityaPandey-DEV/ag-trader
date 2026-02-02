@@ -138,6 +138,9 @@ class TradingEngine:
                             self.risk_manager.record_trade(costs['net_pnl'] / (signal['entry'] * quantity) * 100)
                             self.session_pnl += costs['net_pnl']
                         self.log(f"EXECUTION: {signal['side']} {symbol} at {signal['entry']}")
+            
+            # Real-time dashboard push after EVERY stock update
+            self.update_dashboard(symbol)
         except Exception as e:
             self.log(f"Error in {symbol} tick: {e}")
 
@@ -156,11 +159,11 @@ class TradingEngine:
                         self.update_dashboard()
                         break
                         
-                    # Execute all symbols in parallel and wait for results
+                    # Execute all symbols in parallel
                     list(executor.map(self.run_tick, symbols))
                     
-                    self.update_dashboard()
-                    time.sleep(60)
+                    # Refresh every 5 seconds for a 'Live' feel
+                    time.sleep(5)
                 except KeyboardInterrupt:
                     self.log("Shutdown signal received.")
                     break

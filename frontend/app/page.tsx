@@ -60,6 +60,9 @@ export default function Dashboard() {
             <Power size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
             {data.kill_switch ? 'FORCE SHUTDOWN' : 'SYSTEM ARMED'}
           </button>
+          <div className="live-tag">
+            <span className="pulse"></span> LIVE: {data.current_symbol} {new Date().toLocaleTimeString()}
+          </div>
         </div>
       </header>
 
