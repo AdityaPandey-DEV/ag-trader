@@ -48,8 +48,7 @@ class DhanBroker(BaseBroker):
             
             # Debug logs for other errors
             if response.get('status') != 'success':
-                 # print(f"[DEBUG] Dhan Batch Fail: {response}") 
-                 pass
+                 print(f"[DEBUG] Dhan Batch Fail: {response}") 
 
             results = {}
             if response and response.get('status') == 'success':
