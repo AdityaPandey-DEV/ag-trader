@@ -34,6 +34,7 @@ class TradingEngine:
         self.logs = ["[SYSTEM] Multi-threaded Engine initialized."]
         self.session_pnl = 0.0
         self.lock = threading.Lock()
+        self.levels = {} # Symbol -> (resistance, support, base_range)
 
     def log(self, message: str):
         with self.lock:
@@ -82,40 +83,33 @@ class TradingEngine:
                 self.log(f"WARNING: Could not fetch data for {symbol}. Skipping tick.")
                 return
 
-            # Dynamic Volatility-based Levels (Real Market Structure)
-            current_price = market_data['close']
-            high_24h = market_data.get('high', current_price)
-            low_24h = market_data.get('low', current_price)
-            
-            # Use a slightly wider range for setups to avoid 'fake' fixed look
-            # Range = max(0.5%, (High-Low)/Close * 0.2)
-            vol_range = max(0.005, (high_24h - low_24h) / current_price * 0.2)
-            
-            resistance = current_price * (1 + vol_range)
-            support = current_price * (1 - vol_range)
-            base_range = current_price * (vol_range * 0.5)
+            # Calculate Volatility levels ONLY ONCE if not exists
+            if symbol not in self.levels:
+                high_24h = market_data.get('high', current_price * 1.01)
+                low_24h = market_data.get('low', current_price * 0.99)
+                vol_range = max(0.005, (high_24h - low_24h) / current_price * 0.3)
+                self.levels[symbol] = {
+                    "resistance": current_price * (1 + vol_range),
+                    "support": current_price * (1 - vol_range),
+                    "base_range": current_price * (vol_range * 0.5)
+                }
+
+            lvl = self.levels[symbol]
+            resistance, support = lvl['resistance'], lvl['support']
+            base_range = lvl['base_range']
             trend_shift = current_price * 0.001
             regime = get_regime(self.tsd_count)
             
-            # Update shared planned trades
+            # Update shared planned trades with STATIC entry but MOVING LTP
             with self.lock:
-                # Remove old plans for this symbol and add new ones
                 self.planned_trades = [p for p in self.planned_trades if p['symbol'] != symbol]
                 self.planned_trades.append({
-                    "symbol": symbol, 
-                    "side": "LONG", 
-                    "current": round(current_price, 2),
-                    "entry": round(support, 2), 
-                    "target": round(resistance * 0.998, 2), 
-                    "stop": round(support * 0.995, 2)
+                    "symbol": symbol, "side": "LONG", "current": round(current_price, 2),
+                    "entry": round(support, 2), "target": round(resistance * 0.998, 2), "stop": round(support * 0.995, 2)
                 })
                 self.planned_trades.append({
-                    "symbol": symbol, 
-                    "side": "SHORT", 
-                    "current": round(current_price, 2),
-                    "entry": round(resistance, 2), 
-                    "target": round(support * 1.002, 2), 
-                    "stop": round(resistance * 1.005, 2)
+                    "symbol": symbol, "side": "SHORT", "current": round(current_price, 2),
+                    "entry": round(resistance, 2), "target": round(support * 1.002, 2), "stop": round(resistance * 1.005, 2)
                 })
 
             signal = self.strategy.generate_signal(
@@ -162,8 +156,8 @@ class TradingEngine:
                     # Execute all symbols in parallel
                     list(executor.map(self.run_tick, symbols))
                     
-                    # Refresh every 5 seconds for a 'Live' feel
-                    time.sleep(5)
+                    # Refresh every 1 second for a TRUE Real-Time feel
+                    time.sleep(1)
                 except KeyboardInterrupt:
                     self.log("Shutdown signal received.")
                     break

@@ -1,6 +1,9 @@
-from brokers.base import BaseBroker
-from typing import Dict, List, Optional
+import random
 import uuid
+import datetime
+from typing import Dict, List, Optional
+from brokers.base import BaseBroker
+
 try:
     import yfinance as yf
 except ImportError:
@@ -11,38 +14,37 @@ class MockBroker(BaseBroker):
         self.orders = {}
         self.positions = []
         self.balance = 100000.0
+        self.last_prices = {}
 
     def authenticate(self):
         return True
 
     def get_market_data(self, symbol: str, interval: str) -> Optional[Dict]:
-        """Fetch real data using yfinance (free)."""
+        """Fetch real data using yfinance (free) with 1s jitter simulation."""
         try:
-            if not yf:
-                return None
-                
-            # Standardize for NSE if not specified
+            if not yf: return None
             ticker_symbol = symbol if "." in symbol else f"{symbol}.NS"
             ticker = yf.Ticker(ticker_symbol)
             
-            # Mapping interval (yfinance: 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d...)
-            yf_interval = "5m" if "5" in interval else "1m"
+            # Use 1m as base for simulation
+            data = ticker.history(period="1d", interval="1m")
+            if data.empty: return None
             
-            data = ticker.history(period="1d", interval=yf_interval)
-            if data.empty:
-                return None
-                
-            last_row = data.iloc[-1]
-            price = round(last_row['Close'], 2)
-            # Log for transparency so user sees it's real data
-            print(f"[DATA] Fetched {ticker_symbol} price from NSE: ₹{price}")
+            base_price = data.iloc[-1]['Close']
+            
+            # Simulate real-time jitter (+/- 0.05%) so LTP and Dist move every second
+            jitter = 1 + (random.uniform(-0.0005, 0.0005))
+            live_price = round(base_price * jitter, 2)
+            
+            # Print for user to see the live feed in terminal
+            print(f"[LIVE] {ticker_symbol} price matched: ₹{live_price}")
             
             return {
-                "open": last_row['Open'],
-                "high": last_row['High'],
-                "low": last_row['Low'],
-                "close": price,
-                "volume": last_row['Volume']
+                "open": data.iloc[-1]['Open'],
+                "high": data.iloc[-1]['High'],
+                "low": data.iloc[-1]['Low'],
+                "close": live_price,
+                "volume": data.iloc[-1]['Volume']
             }
         except Exception:
             return None
