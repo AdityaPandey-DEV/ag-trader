@@ -16,7 +16,9 @@ import os
 from utils.tax_calculator import TaxCalculator
 from utils.ai_analyzer import AITrendAnalyzer
 from utils.screenshot import ChartScreenshotter
+from utils.screenshot import ChartScreenshotter
 from core.screener import StockScreener
+from core.persistence import PersistenceManager
 
 class TradingEngine:
     def __init__(self):
@@ -34,19 +36,29 @@ class TradingEngine:
         # State
         self.paper_mode = True # Default to paper for safety
         self.initial_capital = 100000.0
+        
+        # Load Persistence if in Paper Mode
+        saved_state = PersistenceManager.load_paper_state()
+        if saved_state:
+            print(f"[PERSISTENCE] Loaded Paper State: ₹{saved_state.get('capital', 100000)}")
+            self.initial_capital = saved_state.get('capital', 100000.0)
+            self.session_pnl = saved_state.get('pnl', 0.0)
+            # We will load positions/history in a moment
+        
         self.tsd_count = 0
         self.watchlist = []
         self.planned_trades = []
         self.logs = ["[SYSTEM] Engine initializing..."]
-        self.session_pnl = 0.0
+        if not saved_state: self.session_pnl = 0.0
         self.lock = threading.Lock()
         self.levels = {} 
         self.kill_switch = False
         self.on_update = lambda symbol="MULTI": None
         
         # Dashboard Data
-        self.equity_history = [{"time": datetime.datetime.now().strftime("%H:%M:%S"), "equity": self.initial_capital}]
+        self.equity_history = saved_state.get('equity_history', [{"time": datetime.datetime.now().strftime("%H:%M:%S"), "equity": self.initial_capital}])
         self.last_equity_update = time.time()
+        self.last_persistence_save = time.time()
         
         # Brokers
         self.mock_broker = MockBroker()
@@ -117,6 +129,7 @@ class TradingEngine:
             self.initial_capital = amount
             # Reset history on capital change
             self.equity_history = [{"time": datetime.datetime.now().strftime("%H:%M:%S"), "equity": amount}]
+            PersistenceManager.reset_paper_state()
             self.log(f"CAPITAL: Set to ₹{amount:.2f}")
             self.update_dashboard()
 
@@ -133,6 +146,15 @@ class TradingEngine:
                     "equity": self.initial_capital + self.session_pnl
                 })
                 self.last_equity_update = now
+
+            # Persistence Save (Every 30s) if Paper Mode
+            if self.paper_mode and now - self.last_persistence_save > 30:
+                PersistenceManager.save_paper_state({
+                    "capital": self.initial_capital,
+                    "pnl": self.session_pnl,
+                    "equity_history": self.equity_history
+                })
+                self.last_persistence_save = now
 
             self.on_update(current_symbol)
         except Exception as e:

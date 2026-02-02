@@ -177,6 +177,7 @@ export default function Dashboard() {
                       <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                     </linearGradient>
                   </defs>
+                  <XAxis dataKey="time" hide={true} />
                   <Tooltip
                     contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '2px' }}
                     itemStyle={{ color: '#fff' }}
